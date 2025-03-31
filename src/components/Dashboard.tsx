@@ -343,7 +343,7 @@ const Dashboard: React.FC = () => {
                             <TableHead>Activo</TableHead>
                             <TableHead>Fecha</TableHead>
                             <TableHead>Estado</TableHead>
-                            <TableHead className="text-right">Acción</TableHead>
+                            <TableHead className="text-left">Acción</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -362,7 +362,7 @@ const Dashboard: React.FC = () => {
                                 <TableCell>
                                   <StatusBadge status={request.status} />
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-left">
                                   {request.status === 'nda_requested' && (
                                     <Button 
                                       size="sm" 
