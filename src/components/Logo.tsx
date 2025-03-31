@@ -4,9 +4,10 @@ import React from 'react';
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  vertical?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = "", size = "md" }) => {
+const Logo: React.FC<LogoProps> = ({ className = "", size = "md", vertical = false }) => {
   const sizes = {
     sm: "h-6 w-auto",
     md: "h-10 w-auto",
