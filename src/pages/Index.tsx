@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import RegistrationForm from '@/components/RegistrationForm';
@@ -26,7 +25,6 @@ const Index = () => {
     setShowRegistrationForm(false);
   };
   
-  // Mock login for demo purposes
   const handleLoginClick = () => {
     setIsLoggedIn(true);
     toast({
@@ -41,13 +39,10 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-estate-offwhite">
-      {/* Hero Section with new background */}
       <header className="bg-estate-navy text-white relative">
-        {/* Navigation */}
         <div className="estate-container py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              {/* Logo */}
               <div className="w-12 h-12">
                 <img 
                   src="/lovable-uploads/b6a96218-180b-4de1-b4a9-b5e3a968cd47.png" 
@@ -68,7 +63,6 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Hero content */}
         <div className="estate-container py-20 md:py-32 relative z-10">
           <div className="max-w-2xl">
             <h2 className="text-3xl md:text-5xl font-bold mb-6 font-serif">
@@ -90,13 +84,11 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Background overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-estate-navy to-estate-navy/80 z-0">
           <div className="absolute inset-0 bg-[url('/lovable-uploads/6ac62d59-e4f6-4d2d-9ad2-996db1306cef.png')] opacity-20 mix-blend-overlay bg-no-repeat bg-cover"></div>
         </div>
       </header>
       
-      {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="estate-container">
           <div className="mb-12 text-center">
@@ -150,7 +142,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* How It Works Section */}
       <section className="py-20 bg-estate-offwhite">
         <div className="estate-container">
           <div className="mb-12 text-center">
@@ -162,10 +153,8 @@ const Index = () => {
           
           <div className="max-w-3xl mx-auto">
             <div className="relative">
-              {/* Timeline line */}
               <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-estate-gold/30"></div>
               
-              {/* Steps */}
               <div className="space-y-12">
                 <div className="relative pl-16">
                   <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">1</div>
@@ -212,7 +201,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Call to Action */}
       <section className="py-20 bg-estate-navy text-white">
         <div className="estate-container text-center">
           <h2 className="text-3xl font-bold mb-4 font-serif">ACTIVOS NO LISTADOS Y SINGULARES</h2>
@@ -229,31 +217,28 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Footer */}
-      <footer className="bg-estate-slate text-white py-10">
-        <div className="estate-container">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0 flex items-center space-x-3">
-              <div className="w-10 h-10">
-                <img 
-                  src="/lovable-uploads/b6a96218-180b-4de1-b4a9-b5e3a968cd47.png" 
-                  alt="HW Logo" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold font-serif">Henry Williams & Partners</h2>
-                <p className="text-estate-lightgrey text-sm mt-1">Exclusivo. Seguro. Confidencial.</p>
-              </div>
-            </div>
-            <div className="text-sm text-estate-lightgrey">
-              &copy; {new Date().getFullYear()} Henry Williams & Partners. Todos los derechos reservados.
-            </div>
+      <footer className="bg-estate-slate text-white py-16">
+        <div className="estate-container flex flex-col items-center justify-center">
+          <div className="mb-6">
+            <img 
+              src="/lovable-uploads/24bad946-3505-4d70-b897-bd60d48c6b48.png" 
+              alt="HW Logo" 
+              className="h-24 w-auto"
+            />
+          </div>
+          
+          <div className="text-center mb-12">
+            <p className="text-estate-gold uppercase tracking-wide text-sm font-light">
+              Henry Williams & Partners
+            </p>
+          </div>
+          
+          <div className="text-sm text-estate-lightgrey">
+            &copy;{new Date().getFullYear()} Henry Williams & Partners | <span className="hover:text-estate-gold cursor-pointer">Privacy Policy</span>
           </div>
         </div>
       </footer>
       
-      {/* Registration Modal */}
       <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
