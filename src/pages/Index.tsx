@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RegistrationFormData } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Building, Users, Shield, ChevronRight } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const Index = () => {
   const { toast } = useToast();
@@ -43,10 +44,7 @@ const Index = () => {
         <div className="estate-container py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              <div className="text-estate-gold text-3xl font-serif font-bold">
-                <span className="inline-block">H</span>
-                <span className="inline-block mx-1">W</span>
-              </div>
+              <Logo size="md" />
               <h1 className="font-serif text-2xl font-bold">
                 Henry Williams <span className="text-estate-gold">&</span> Partners
               </h1>
@@ -217,10 +215,7 @@ const Index = () => {
       <footer className="bg-estate-slate text-white py-16">
         <div className="estate-container flex flex-col items-center justify-center">
           <div className="mb-6">
-            <div className="text-estate-gold text-5xl font-serif font-bold">
-              <span className="inline-block">H</span>
-              <span className="inline-block mx-1">W</span>
-            </div>
+            <Logo size="lg" />
           </div>
           
           <div className="text-center mb-12">
