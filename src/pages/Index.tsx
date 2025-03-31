@@ -50,7 +50,7 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <Button 
               variant="link" 
-              className="text-[#ffcc00] font-semibold hover:text-white hover:bg-[#ffcc00]/30 p-2 rounded-md transition-colors"
+              className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors"
               onClick={handleRegisterClick}
             >
               Request access
@@ -58,22 +58,22 @@ const Index = () => {
             
             <div className="flex flex-col items-center">
               <Logo size="lg" className="mb-1" />
-              <h1 className="uppercase tracking-widest text-sm text-[#ffcc00] font-semibold">
+              <h1 className="uppercase tracking-widest text-sm text-[#E1D48A] font-semibold">
                 Henry Williams & Partners
               </h1>
             </div>
             
             <div className="flex gap-4 items-center">
-              <Button variant="link" className="text-[#ffcc00] font-semibold hover:text-white hover:bg-[#ffcc00]/30 p-2 rounded-md transition-colors">
+              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 About
               </Button>
-              <Button variant="link" className="text-[#ffcc00] font-semibold hover:text-white hover:bg-[#ffcc00]/30 p-2 rounded-md transition-colors">
+              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 Member benefits
               </Button>
-              <Button variant="link" className="text-[#ffcc00] font-semibold hover:text-white hover:bg-[#ffcc00]/30 p-2 rounded-md transition-colors">
+              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 Privacy
               </Button>
-              <Button variant="link" className="text-[#ffcc00] font-semibold hover:text-white hover:bg-[#ffcc00]/30 p-2 rounded-md transition-colors">
+              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 Login
               </Button>
             </div>
@@ -82,7 +82,7 @@ const Index = () => {
         
         <div className="estate-container py-16 md:py-20 relative z-10">
           <div className="flex justify-center">
-            <Card className="w-full max-w-md border-[#ffcc00] shadow-lg">
+            <Card className="w-full max-w-md border-[#E1D48A] shadow-lg">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-estate-slate">Acceso Restringido</CardTitle>
                 <CardDescription>Ingrese sus credenciales para acceder a la plataforma</CardDescription>
@@ -120,7 +120,7 @@ const Index = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#ffcc00] hover:bg-[#ffcc00]/90 text-estate-navy font-medium"
+                    className="w-full bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy font-medium"
                   >
                     Acceder
                   </Button>
@@ -132,7 +132,7 @@ const Index = () => {
                 </p>
                 <Button 
                   variant="outline"
-                  className="w-full border-[#ffcc00] text-[#ffcc00] hover:bg-[#ffcc00] hover:text-estate-navy font-medium"
+                  className="w-full border-[#E1D48A] text-[#E1D48A] hover:bg-[#E1D48A] hover:text-estate-navy font-medium"
                   onClick={handleRegisterClick}
                 >
                   Solicitar Acceso
@@ -154,13 +154,13 @@ const Index = () => {
           </div>
           
           <div className="text-center mb-4">
-            <p className="text-[#ffcc00] uppercase tracking-wide text-xs font-light">
+            <p className="text-[#E1D48A] uppercase tracking-wide text-xs font-light">
               Henry Williams & Partners
             </p>
           </div>
           
           <div className="text-xs text-estate-lightgrey">
-            &copy;{new Date().getFullYear()} Henry Williams & Partners | <span className="hover:text-[#ffcc00] cursor-pointer">Privacy Policy</span>
+            &copy;{new Date().getFullYear()} Henry Williams & Partners | <span className="hover:text-[#E1D48A] cursor-pointer">Privacy Policy</span>
           </div>
         </div>
       </footer>

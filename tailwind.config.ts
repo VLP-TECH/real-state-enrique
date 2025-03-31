@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -73,8 +74,8 @@ export default {
 					slate: '#283424',
 					offwhite: '#F8FAFC',
 					lightgrey: '#E2E8F0',
-					highlight: '#D4AF37',
-					gold: '#D4AF37',
+					highlight: '#E1D48A',
+					gold: '#E1D48A',
 					cream: '#F5F5DC',
 					success: '#10B981',
 					warning: '#F59E0B',
