@@ -50,7 +50,7 @@ const Index = () => {
               {/* Logo */}
               <div className="w-12 h-12">
                 <img 
-                  src="/lovable-uploads/a3f8f0fa-6c66-49f4-9e7d-96830befd66d.png" 
+                  src="/lovable-uploads/b6a96218-180b-4de1-b4a9-b5e3a968cd47.png" 
                   alt="HW Logo" 
                   className="w-full h-full object-contain"
                 />
@@ -236,7 +236,7 @@ const Index = () => {
             <div className="mb-6 md:mb-0 flex items-center space-x-3">
               <div className="w-10 h-10">
                 <img 
-                  src="/lovable-uploads/a3f8f0fa-6c66-49f4-9e7d-96830befd66d.png" 
+                  src="/lovable-uploads/b6a96218-180b-4de1-b4a9-b5e3a968cd47.png" 
                   alt="HW Logo" 
                   className="w-full h-full object-contain"
                 />

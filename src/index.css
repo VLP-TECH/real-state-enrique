@@ -131,4 +131,9 @@
   .text-highlight {
     @apply text-estate-gold font-serif;
   }
+
+  .hw-logo {
+    @apply bg-estate-navy text-white p-2;
+    aspect-ratio: 1;
+  }
 }
