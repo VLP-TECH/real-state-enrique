@@ -1,20 +1,23 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import RegistrationForm from '@/components/RegistrationForm';
-import Dashboard from '@/components/Dashboard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RegistrationFormData } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Building, Users, Shield, ChevronRight } from 'lucide-react';
+import { Lock, Building, Users, Shield, ChevronRight, Mail } from 'lucide-react';
 import Logo from '@/components/Logo';
-import BuildingGraphic from '@/components/BuildingGraphic';
 import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import RegistrationForm from '@/components/RegistrationForm';
 
 const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   
   const handleRegisterClick = () => {
     setShowRegistrationForm(true);
@@ -29,7 +32,9 @@ const Index = () => {
     setShowRegistrationForm(false);
   };
   
-  const handleLoginClick = () => {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Login attempted with:', { email, password });
     navigate('/dashboard');
     toast({
       title: 'Inicio de Sesión Exitoso',
@@ -48,38 +53,68 @@ const Index = () => {
                 Henry Williams <span className="text-estate-gold">&</span> Partners
               </h1>
             </div>
-            <Button 
-              variant="outline" 
-              className="border-estate-gold text-estate-gold hover:bg-estate-gold hover:text-estate-navy relative z-20" 
-              onClick={handleLoginClick}>
-              Acceso
-            </Button>
           </div>
         </div>
         
-        <div className="estate-container py-16 md:py-28 relative z-10">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-6 font-sans leading-tight">
-                EL ÚNICO <span className="text-estate-gold">CLUB PRIVADO</span> DE PROPIEDADES EXCLUSIVAS EN ESPAÑA
-              </h2>
-              <p className="text-lg mb-8 text-estate-lightgrey">
-                Una plataforma privada y segura que conecta mandatarios de confianza e inversores sofisticados para transacciones inmobiliarias de alto valor.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+        <div className="estate-container py-16 md:py-20 relative z-10">
+          <div className="flex justify-center">
+            <Card className="w-full max-w-md border-estate-gold">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-estate-slate">Acceso Restringido</CardTitle>
+                <CardDescription>Ingrese sus credenciales para acceder a la plataforma</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-estate-slate">Correo Electrónico</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-estate-steel h-4 w-4" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 border-estate-lightgrey" 
+                        placeholder="correo@ejemplo.com"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-estate-slate">Contraseña</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-estate-steel h-4 w-4" />
+                      <Input 
+                        id="password" 
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10 border-estate-lightgrey" 
+                        required
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-estate-gold hover:bg-estate-gold/90 text-estate-navy"
+                  >
+                    Acceder
+                  </Button>
+                </form>
+              </CardContent>
+              <CardFooter className="flex flex-col">
+                <p className="text-sm text-estate-steel mb-4">
+                  ¿Aún no es miembro? Solicite acceso a nuestra plataforma exclusiva.
+                </p>
                 <Button 
-                  size="lg" 
-                  className="bg-estate-gold text-estate-navy hover:bg-estate-gold/90"
+                  variant="outline"
+                  className="w-full border-estate-gold text-estate-gold hover:bg-estate-gold hover:text-estate-navy"
                   onClick={handleRegisterClick}
                 >
                   Solicitar Acceso
-                  <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <BuildingGraphic />
-            </div>
+              </CardFooter>
+            </Card>
           </div>
         </div>
         
@@ -88,147 +123,19 @@ const Index = () => {
         </div>
       </header>
       
-      <section className="py-20 bg-white">
-        <div className="estate-container">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold mb-4 text-estate-slate font-serif">¿Por Qué Elegir Nuestra Plataforma?</h2>
-            <p className="text-estate-steel max-w-2xl mx-auto">
-              Proporcionamos un entorno seguro y privado para que profesionales inmobiliarios e inversores se conecten sin comprometer la confidencialidad.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-estate-offwhite p-6 rounded-lg shadow-sm border border-estate-lightgrey">
-              <div className="w-12 h-12 bg-estate-gold/10 rounded-full flex items-center justify-center mb-4">
-                <Lock className="h-6 w-6 text-estate-gold" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-estate-slate">Privacidad Absoluta</h3>
-              <p className="text-estate-steel">
-                Todas las identidades de usuarios están anonimizadas y protegidas mediante un sistema de ID seguro.
-              </p>
-            </div>
-            
-            <div className="bg-estate-offwhite p-6 rounded-lg shadow-sm border border-estate-lightgrey">
-              <div className="w-12 h-12 bg-estate-gold/10 rounded-full flex items-center justify-center mb-4">
-                <Building className="h-6 w-6 text-estate-gold" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-estate-slate">Activos Premium</h3>
-              <p className="text-estate-steel">
-                Acceso a propiedades exclusivas fuera del mercado y oportunidades de inversión.
-              </p>
-            </div>
-            
-            <div className="bg-estate-offwhite p-6 rounded-lg shadow-sm border border-estate-lightgrey">
-              <div className="w-12 h-12 bg-estate-gold/10 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-estate-gold" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-estate-slate">Red Verificada</h3>
-              <p className="text-estate-steel">
-                Cada miembro es verificado y aprobado manualmente por nuestro equipo.
-              </p>
-            </div>
-            
-            <div className="bg-estate-offwhite p-6 rounded-lg shadow-sm border border-estate-lightgrey">
-              <div className="w-12 h-12 bg-estate-gold/10 rounded-full flex items-center justify-center mb-4">
-                <Shield className="h-6 w-6 text-estate-gold" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-estate-slate">Proceso Seguro</h3>
-              <p className="text-estate-steel">
-                Requisitos estrictos de NDA y compartición de información controlada.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      <section className="py-20 bg-estate-offwhite">
-        <div className="estate-container">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold mb-4 text-estate-slate font-serif">Cómo Funciona</h2>
-            <p className="text-estate-steel max-w-2xl mx-auto">
-              Nuestra plataforma está diseñada con la seguridad y la discreción como pilares, garantizando un proceso controlado desde el registro hasta la transacción.
-            </p>
-          </div>
-          
-          <div className="max-w-3xl mx-auto">
-            <div className="relative">
-              <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-estate-gold/30"></div>
-              
-              <div className="space-y-12">
-                <div className="relative pl-16">
-                  <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">1</div>
-                  <h3 className="text-xl font-semibold mb-2 text-estate-slate">Solicitud y Verificación</h3>
-                  <p className="text-estate-steel">
-                    Envíe su solicitud de membresía. Nuestro equipo revisará y verificará manualmente sus credenciales.
-                  </p>
-                </div>
-                
-                <div className="relative pl-16">
-                  <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">2</div>
-                  <h3 className="text-xl font-semibold mb-2 text-estate-slate">Acceso Concedido</h3>
-                  <p className="text-estate-steel">
-                    Una vez aprobado, recibirá un ID anónimo seguro y acceso a la plataforma.
-                  </p>
-                </div>
-                
-                <div className="relative pl-16">
-                  <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">3</div>
-                  <h3 className="text-xl font-semibold mb-2 text-estate-slate">Descubra Oportunidades</h3>
-                  <p className="text-estate-steel">
-                    Explore listados anonimizados de activos exclusivos o envíe sus propias oportunidades.
-                  </p>
-                </div>
-                
-                <div className="relative pl-16">
-                  <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">4</div>
-                  <h3 className="text-xl font-semibold mb-2 text-estate-slate">Solicitud de Información</h3>
-                  <p className="text-estate-steel">
-                    Solicite información detallada sobre activos de interés. Firme un NDA específico para cada activo.
-                  </p>
-                </div>
-                
-                <div className="relative pl-16">
-                  <div className="absolute left-0 w-10 h-10 rounded-full bg-estate-gold text-estate-navy flex items-center justify-center font-bold">5</div>
-                  <h3 className="text-xl font-semibold mb-2 text-estate-slate">Transacciones Seguras</h3>
-                  <p className="text-estate-steel">
-                    Conecte con contrapartes a través de nuestra plataforma segura con total confidencialidad.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      <section className="py-20 bg-estate-navy text-white">
-        <div className="estate-container text-center">
-          <h2 className="text-3xl font-bold mb-4 font-serif">ACTIVOS NO LISTADOS Y SINGULARES</h2>
-          <p className="text-lg text-estate-lightgrey mb-8 max-w-2xl mx-auto">
-            Solicite acceso para descubrir oportunidades inmobiliarias exclusivas en nuestra red privada.
-          </p>
-          <Button 
-            size="lg" 
-            className="bg-estate-gold text-estate-navy hover:bg-estate-gold/90"
-            onClick={handleRegisterClick}
-          >
-            Solicitar Acceso
-          </Button>
-        </div>
-      </section>
-      
-      <footer className="bg-estate-slate text-white py-16">
+      <footer className="bg-estate-slate text-white py-8">
         <div className="estate-container flex flex-col items-center justify-center">
-          <div className="mb-6">
-            <Logo size="lg" />
+          <div className="mb-3">
+            <Logo size="sm" />
           </div>
           
-          <div className="text-center mb-12">
-            <p className="text-estate-gold uppercase tracking-wide text-sm font-light">
+          <div className="text-center mb-4">
+            <p className="text-estate-gold uppercase tracking-wide text-xs font-light">
               Henry Williams & Partners
             </p>
           </div>
           
-          <div className="text-sm text-estate-lightgrey">
+          <div className="text-xs text-estate-lightgrey">
             &copy;{new Date().getFullYear()} Henry Williams & Partners | <span className="hover:text-estate-gold cursor-pointer">Privacy Policy</span>
           </div>
         </div>
