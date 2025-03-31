@@ -5,6 +5,7 @@ import UserProfile from './UserProfile';
 import AssetForm from './AssetForm';
 import AssetList from './AssetList';
 import RequestForm from './RequestForm';
+import AssetCard from './AssetCard'; // Added missing import
 import { Asset, AssetFormData, InformationRequest, User } from '@/utils/types';
 import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
