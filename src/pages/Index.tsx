@@ -46,7 +46,7 @@ const Index = () => {
     <div className="min-h-screen bg-estate-offwhite">
       <header className="bg-estate-navy text-white relative">
         {/* Top navigation bar - Make the gold color more prominent */}
-        <div className="estate-container py-3">
+        <div className="estate-container py-3 relative z-20">
           <div className="flex justify-between items-center">
             <Button 
               variant="link" 
