@@ -44,13 +44,13 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Logo size="md" className="flex-shrink-0" />
-              <h1 className="font-sans text-xl md:text-2xl font-bold text-white">
+              <h1 className="font-sans text-xl md:text-2xl font-bold text-estate-gold">
                 Henry Williams <span className="text-estate-gold">&</span> Partners
               </h1>
             </div>
             <Button 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-estate-navy relative z-20" 
+              className="border-estate-gold text-estate-gold hover:bg-estate-gold hover:text-estate-navy relative z-20" 
               onClick={handleLoginClick}>
               Acceso
             </Button>
