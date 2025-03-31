@@ -8,11 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Lock, Building, Users, Shield, ChevronRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import BuildingGraphic from '@/components/BuildingGraphic';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const handleRegisterClick = () => {
     setShowRegistrationForm(true);
@@ -28,16 +29,12 @@ const Index = () => {
   };
   
   const handleLoginClick = () => {
-    setIsLoggedIn(true);
+    navigate('/dashboard');
     toast({
       title: 'Inicio de Sesión Exitoso',
       description: 'Bienvenido de nuevo a Henry Williams & Partners.',
     });
   };
-  
-  if (isLoggedIn) {
-    return <Dashboard />;
-  }
   
   return (
     <div className="min-h-screen bg-estate-offwhite">
