@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import RegistrationForm from '@/components/RegistrationForm';
@@ -8,6 +7,7 @@ import { RegistrationFormData } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Building, Users, Shield, ChevronRight } from 'lucide-react';
 import Logo from '@/components/Logo';
+import BuildingGraphic from '@/components/BuildingGraphic';
 
 const Index = () => {
   const { toast } = useToast();
@@ -80,12 +80,7 @@ const Index = () => {
               </div>
             </div>
             <div className="hidden md:block relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-estate-navy to-transparent z-10"></div>
-              <img 
-                src="/lovable-uploads/8fa7badb-fc8c-4bf1-8a8a-1f1047f39bc7.png" 
-                alt="Luxury Building"
-                className="w-full h-auto max-h-96 object-contain mix-blend-screen"
-              />
+              <BuildingGraphic />
             </div>
           </div>
         </div>
