@@ -45,13 +45,37 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-estate-offwhite">
       <header className="bg-estate-navy text-white relative">
-        <div className="estate-container py-4">
+        {/* Top navigation bar */}
+        <div className="estate-container py-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Logo size="md" className="flex-shrink-0" />
-              <h1 className="font-sans text-xl md:text-2xl font-bold text-estate-gold">
-                Henry Williams <span className="text-estate-gold">&</span> Partners
+            <Button 
+              variant="link" 
+              className="text-estate-gold hover:text-estate-gold/90 p-0"
+              onClick={handleRegisterClick}
+            >
+              Request access
+            </Button>
+            
+            <div className="flex flex-col items-center">
+              <Logo size="lg" className="mb-1" />
+              <h1 className="uppercase tracking-widest text-xs text-estate-gold font-light">
+                Henry Williams & Partners
               </h1>
+            </div>
+            
+            <div className="flex gap-4 items-center">
+              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+                About
+              </Button>
+              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+                Member benefits
+              </Button>
+              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+                Privacy
+              </Button>
+              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+                Login
+              </Button>
             </div>
           </div>
         </div>
@@ -125,8 +149,8 @@ const Index = () => {
       
       <footer className="bg-estate-slate text-white py-8">
         <div className="estate-container flex flex-col items-center justify-center">
-          <div className="mb-3">
-            <Logo size="sm" />
+          <div className="mb-4">
+            <Logo size="lg" />
           </div>
           
           <div className="text-center mb-4">
