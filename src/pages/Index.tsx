@@ -31,7 +31,7 @@ const Index = () => {
     setIsLoggedIn(true);
     toast({
       title: 'Inicio de Sesión Exitoso',
-      description: 'Bienvenido de nuevo a Club Privado de Inmobiliarias.',
+      description: 'Bienvenido de nuevo a Real State Club.',
     });
   };
   
@@ -45,8 +45,8 @@ const Index = () => {
       <header className="bg-estate-navy text-white">
         <div className="estate-container py-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Club Privado de Inmobiliarias</h1>
-            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-estate-navy" onClick={handleLoginClick}>
+            <h1 className="text-2xl font-bold">Real State Club</h1>
+            <Button variant="outline" className="border-white text-estate-navy bg-white hover:bg-estate-lightgrey hover:text-estate-navy" onClick={handleLoginClick}>
               Acceso de Miembros
             </Button>
           </div>
@@ -210,11 +210,11 @@ const Index = () => {
         <div className="estate-container">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <h2 className="text-xl font-bold">Club Privado de Inmobiliarias</h2>
+              <h2 className="text-xl font-bold">Real State Club</h2>
               <p className="text-estate-lightgrey text-sm mt-1">Exclusivo. Seguro. Confidencial.</p>
             </div>
             <div className="text-sm text-estate-lightgrey">
-              &copy; {new Date().getFullYear()} Club Privado de Inmobiliarias. Todos los derechos reservados.
+              &copy; {new Date().getFullYear()} Real State Club. Todos los derechos reservados.
             </div>
           </div>
         </div>
