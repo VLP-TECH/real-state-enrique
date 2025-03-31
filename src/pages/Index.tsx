@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import RegistrationForm from '@/components/RegistrationForm';
@@ -49,7 +50,7 @@ const Index = () => {
             </div>
             <Button 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-estate-navy" 
+              className="border-white text-white hover:bg-white hover:text-estate-navy relative z-20" 
               onClick={handleLoginClick}>
               Acceso
             </Button>
