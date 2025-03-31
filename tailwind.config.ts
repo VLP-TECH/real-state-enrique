@@ -64,13 +64,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				estate: {
-					navy: '#0F172A',
+					navy: '#2A3928', // Cambiado a verde oscuro
 					charcoal: '#475569',
 					steel: '#64748B',
-					slate: '#1E293B',
+					slate: '#283424', // Oscurecido acorde al tema
 					offwhite: '#F8FAFC',
 					lightgrey: '#E2E8F0',
-					highlight: '#3B82F6',
+					highlight: '#D4AF37', // Cambiado a dorado
+					gold: '#D4AF37', // Nuevo color dorado
+					cream: '#F5F5DC', // Nuevo color crema
 					success: '#10B981',
 					warning: '#F59E0B',
 					error: '#EF4444',
@@ -107,6 +109,12 @@ export default {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out'
+			},
+			backgroundImage: {
+				'hero-pattern': "url('/public/lovable-uploads/6ac62d59-e4f6-4d2d-9ad2-996db1306cef.png')",
+			},
+			fontFamily: {
+				'serif': ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
 			}
 		}
 	},
