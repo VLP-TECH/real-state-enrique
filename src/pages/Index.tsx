@@ -79,11 +79,12 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            <div className="hidden md:flex justify-end">
+            <div className="hidden md:block relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-estate-navy to-transparent z-10"></div>
               <img 
                 src="/lovable-uploads/8fa7badb-fc8c-4bf1-8a8a-1f1047f39bc7.png" 
                 alt="Luxury Building"
-                className="max-h-96 opacity-50"
+                className="w-full h-auto max-h-96 object-contain mix-blend-screen"
               />
             </div>
           </div>
