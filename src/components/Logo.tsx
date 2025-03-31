@@ -8,13 +8,13 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ className = "", size = "md" }) => {
   const sizes = {
-    sm: "h-8 w-auto",
-    md: "h-12 w-auto",
-    lg: "h-20 w-auto"
+    sm: "h-6 w-auto",
+    md: "h-10 w-auto",
+    lg: "h-16 w-auto"
   };
   
   return (
-    <div className={`${sizes[size]} ${className}`}>
+    <div className={`${sizes[size]} ${className} flex-shrink-0`}>
       <img 
         src="/lovable-uploads/c0d02d3c-dbea-49cd-b5a9-65616bf81b4e.png" 
         alt="HW Logo" 

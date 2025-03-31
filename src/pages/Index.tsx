@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import RegistrationForm from '@/components/RegistrationForm';
@@ -44,9 +45,9 @@ const Index = () => {
       <header className="bg-estate-navy text-white relative">
         <div className="estate-container py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <Logo size="md" />
-              <h1 className="font-sans text-2xl font-bold">
+            <div className="flex items-center gap-3">
+              <Logo size="md" className="flex-shrink-0" />
+              <h1 className="font-sans text-xl md:text-2xl font-bold">
                 Henry Williams <span className="text-estate-gold">&</span> Partners
               </h1>
             </div>
@@ -59,10 +60,10 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="estate-container py-20 md:py-32 relative z-10">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="estate-container py-16 md:py-28 relative z-10">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-6 font-sans">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 font-sans leading-tight">
                 EL ÚNICO <span className="text-estate-gold">CLUB PRIVADO</span> DE PROPIEDADES EXCLUSIVAS EN ESPAÑA
               </h2>
               <p className="text-lg mb-8 text-estate-lightgrey">
@@ -79,7 +80,7 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            <div className="hidden md:block relative">
+            <div className="hidden md:block">
               <BuildingGraphic />
             </div>
           </div>

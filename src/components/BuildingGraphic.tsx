@@ -3,7 +3,7 @@ import React from 'react';
 
 const BuildingGraphic: React.FC = () => {
   return (
-    <div className="relative w-full h-full min-h-[400px]">
+    <div className="relative w-full h-full min-h-[380px]">
       <div className="absolute inset-0">
         <svg
           viewBox="0 0 400 500"
@@ -74,7 +74,7 @@ const BuildingGraphic: React.FC = () => {
       <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-estate-gold rounded-full opacity-70 animate-pulse" style={{ animationDelay: '1s' }}></div>
       <div className="absolute bottom-1/3 right-1/2 w-1 h-1 bg-estate-gold rounded-full opacity-70 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
       
-      {/* Overlay for better integration with background */}
+      {/* Enhanced Overlay for better integration with header background */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-estate-navy/30 mix-blend-overlay"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-transparent to-estate-navy/20 mix-blend-overlay"></div>
     </div>
