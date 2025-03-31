@@ -11,9 +11,10 @@ interface RequestFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (assetId: string, notes: string) => void;
+  buttonStyle?: string;
 }
 
-const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmit }) => {
+const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmit, buttonStyle = "" }) => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -81,7 +82,12 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className={buttonStyle}
+          >
             {isSubmitting ? "Enviando..." : "Enviar Solicitud"}
           </Button>
         </DialogFooter>

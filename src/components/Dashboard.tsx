@@ -281,16 +281,17 @@ const Dashboard: React.FC = () => {
         
         <div className="lg:col-span-3">
           <Tabs defaultValue="discover" className="w-full">
-            <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex">
-              <TabsTrigger value="discover">Descubrir Activos</TabsTrigger>
-              <TabsTrigger value="my-assets">Mis Activos</TabsTrigger>
-              <TabsTrigger value="requests">Mis Solicitudes</TabsTrigger>
+            <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex border-[#E1D48A]">
+              <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Descubrir Activos</TabsTrigger>
+              <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Activos</TabsTrigger>
+              <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Solicitudes</TabsTrigger>
             </TabsList>
             
             <TabsContent value="discover" className="mt-6">
               <AssetList 
                 assets={mockAssets.filter(asset => asset.ownerId !== mockUser.id)} 
                 onRequestInfo={handleRequestInfo} 
+                buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy" 
               />
               
               <RequestForm
@@ -298,6 +299,7 @@ const Dashboard: React.FC = () => {
                 open={isRequestFormOpen}
                 onClose={() => setIsRequestFormOpen(false)}
                 onSubmit={handleRequestSubmit}
+                buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
               />
             </TabsContent>
             
