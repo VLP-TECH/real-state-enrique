@@ -43,12 +43,9 @@ const Index = () => {
         <div className="estate-container py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              <div className="w-12 h-12">
-                <img 
-                  src="/lovable-uploads/b6a96218-180b-4de1-b4a9-b5e3a968cd47.png" 
-                  alt="HW Logo" 
-                  className="w-full h-full object-contain"
-                />
+              <div className="text-estate-gold text-3xl font-serif font-bold">
+                <span className="inline-block">H</span>
+                <span className="inline-block mx-1">W</span>
               </div>
               <h1 className="font-serif text-2xl font-bold">
                 Henry Williams <span className="text-estate-gold">&</span> Partners
@@ -220,11 +217,10 @@ const Index = () => {
       <footer className="bg-estate-slate text-white py-16">
         <div className="estate-container flex flex-col items-center justify-center">
           <div className="mb-6">
-            <img 
-              src="/lovable-uploads/24bad946-3505-4d70-b897-bd60d48c6b48.png" 
-              alt="HW Logo" 
-              className="h-24 w-auto"
-            />
+            <div className="text-estate-gold text-5xl font-serif font-bold">
+              <span className="inline-block">H</span>
+              <span className="inline-block mx-1">W</span>
+            </div>
           </div>
           
           <div className="text-center mb-12">
