@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import RegistrationForm from '@/components/RegistrationForm';
@@ -43,9 +44,9 @@ const Index = () => {
       <header className="bg-estate-navy text-white relative">
         <div className="estate-container py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Logo size="md" />
-              <h1 className="font-serif text-2xl font-bold">
+              <h1 className="font-sans text-2xl font-bold">
                 Henry Williams <span className="text-estate-gold">&</span> Partners
               </h1>
             </div>
@@ -59,22 +60,31 @@ const Index = () => {
         </div>
         
         <div className="estate-container py-20 md:py-32 relative z-10">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 font-serif">
-              EL ÚNICO <span className="text-estate-gold">CLUB PRIVADO</span> DE PROPIEDADES EXCLUSIVAS EN ESPAÑA
-            </h2>
-            <p className="text-lg mb-8 text-estate-lightgrey">
-              Una plataforma privada y segura que conecta mandatarios de confianza e inversores sofisticados para transacciones inmobiliarias de alto valor.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-estate-gold text-estate-navy hover:bg-estate-gold/90"
-                onClick={handleRegisterClick}
-              >
-                Solicitar Acceso
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 font-sans">
+                EL ÚNICO <span className="text-estate-gold">CLUB PRIVADO</span> DE PROPIEDADES EXCLUSIVAS EN ESPAÑA
+              </h2>
+              <p className="text-lg mb-8 text-estate-lightgrey">
+                Una plataforma privada y segura que conecta mandatarios de confianza e inversores sofisticados para transacciones inmobiliarias de alto valor.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  size="lg" 
+                  className="bg-estate-gold text-estate-navy hover:bg-estate-gold/90"
+                  onClick={handleRegisterClick}
+                >
+                  Solicitar Acceso
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="hidden md:flex justify-end">
+              <img 
+                src="/lovable-uploads/8fa7badb-fc8c-4bf1-8a8a-1f1047f39bc7.png" 
+                alt="Luxury Building"
+                className="max-h-96 opacity-50"
+              />
             </div>
           </div>
         </div>
@@ -233,7 +243,7 @@ const Index = () => {
       <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle className="text-estate-navy font-serif">Solicitud de Acceso</DialogTitle>
+            <DialogTitle className="text-estate-navy font-sans">Solicitud de Acceso</DialogTitle>
           </DialogHeader>
           <RegistrationForm onSubmit={handleRegistrationSubmit} />
         </DialogContent>
