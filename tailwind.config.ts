@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Roboto', 'sans-serif'],
+				serif: ['Roboto', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -64,15 +67,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				estate: {
-					navy: '#2A3928', // Cambiado a verde oscuro
+					navy: '#2A3928',
 					charcoal: '#475569',
 					steel: '#64748B',
-					slate: '#283424', // Oscurecido acorde al tema
+					slate: '#283424',
 					offwhite: '#F8FAFC',
 					lightgrey: '#E2E8F0',
-					highlight: '#D4AF37', // Cambiado a dorado
-					gold: '#D4AF37', // Nuevo color dorado
-					cream: '#F5F5DC', // Nuevo color crema
+					highlight: '#D4AF37',
+					gold: '#D4AF37',
+					cream: '#F5F5DC',
 					success: '#10B981',
 					warning: '#F59E0B',
 					error: '#EF4444',
@@ -112,9 +115,6 @@ export default {
 			},
 			backgroundImage: {
 				'hero-pattern': "url('/public/lovable-uploads/6ac62d59-e4f6-4d2d-9ad2-996db1306cef.png')",
-			},
-			fontFamily: {
-				'serif': ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
 			}
 		}
 	},
