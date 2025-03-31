@@ -5,7 +5,7 @@ import UserProfile from './UserProfile';
 import AssetForm from './AssetForm';
 import AssetList from './AssetList';
 import RequestForm from './RequestForm';
-import AssetCard from './AssetCard'; // Added missing import
+import AssetCard from './AssetCard';
 import { Asset, AssetFormData, InformationRequest, User } from '@/utils/types';
 import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -223,8 +223,8 @@ const Dashboard: React.FC = () => {
     mockUser.assetsCount = (mockUser.assetsCount || 0) + 1;
     
     toast({
-      title: "Asset submitted successfully",
-      description: `Your asset ${newAsset.id} has been submitted for review.`,
+      title: "Activo enviado correctamente",
+      description: `Su activo ${newAsset.id} ha sido enviado para revisión.`,
     });
   };
   
@@ -267,8 +267,8 @@ const Dashboard: React.FC = () => {
     );
     
     toast({
-      title: "NDA Signed",
-      description: "Your signed NDA has been submitted for review.",
+      title: "NDA Firmado",
+      description: "Su NDA firmado ha sido enviado para revisión.",
     });
   };
   
@@ -282,9 +282,9 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-3">
           <Tabs defaultValue="discover" className="w-full">
             <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex">
-              <TabsTrigger value="discover">Discover Assets</TabsTrigger>
-              <TabsTrigger value="my-assets">My Assets</TabsTrigger>
-              <TabsTrigger value="requests">My Requests</TabsTrigger>
+              <TabsTrigger value="discover">Descubrir Activos</TabsTrigger>
+              <TabsTrigger value="my-assets">Mis Activos</TabsTrigger>
+              <TabsTrigger value="requests">Mis Solicitudes</TabsTrigger>
             </TabsList>
             
             <TabsContent value="discover" className="mt-6">
@@ -306,12 +306,12 @@ const Dashboard: React.FC = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>My Submitted Assets</CardTitle>
+                  <CardTitle>Mis Activos Enviados</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {userAssets.length === 0 ? (
                     <div className="text-center py-8 bg-estate-offwhite rounded-md">
-                      <p className="text-estate-steel">You haven't submitted any assets yet.</p>
+                      <p className="text-estate-steel">Aún no ha enviado ningún activo.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -327,23 +327,23 @@ const Dashboard: React.FC = () => {
             <TabsContent value="requests" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Information Requests</CardTitle>
+                  <CardTitle>Solicitudes de Información</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {userRequests.length === 0 ? (
                     <div className="text-center py-8 bg-estate-offwhite rounded-md">
-                      <p className="text-estate-steel">You haven't made any information requests yet.</p>
+                      <p className="text-estate-steel">Aún no ha realizado ninguna solicitud de información.</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Request ID</TableHead>
-                            <TableHead>Asset</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
+                            <TableHead>ID de Solicitud</TableHead>
+                            <TableHead>Activo</TableHead>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="text-right">Acción</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -355,7 +355,7 @@ const Dashboard: React.FC = () => {
                                 <TableCell>
                                   <div className="flex flex-col">
                                     <span>{asset?.id}</span>
-                                    <span className="text-xs text-estate-steel">{asset?.type} in {asset?.location.city}</span>
+                                    <span className="text-xs text-estate-steel">{asset?.type} en {asset?.location.city}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
@@ -371,7 +371,7 @@ const Dashboard: React.FC = () => {
                                       className="flex items-center gap-1"
                                     >
                                       <FileText className="h-3 w-3" />
-                                      <span>Sign NDA</span>
+                                      <span>Firmar NDA</span>
                                     </Button>
                                   )}
                                   
@@ -384,21 +384,21 @@ const Dashboard: React.FC = () => {
                                     >
                                       <a href={request.sharedInfoLink} target="_blank" rel="noopener noreferrer">
                                         <Eye className="h-3 w-3" />
-                                        <span>View Files</span>
+                                        <span>Ver Archivos</span>
                                       </a>
                                     </Button>
                                   )}
                                   
                                   {(request.status === 'approved' || request.status === 'nda_received') && (
-                                    <span className="text-sm text-estate-steel">Awaiting admin action</span>
+                                    <span className="text-sm text-estate-steel">Esperando acción del administrador</span>
                                   )}
                                   
                                   {request.status === 'rejected' && (
-                                    <span className="text-sm text-estate-error">Request declined</span>
+                                    <span className="text-sm text-estate-error">Solicitud rechazada</span>
                                   )}
                                   
                                   {request.status === 'pending' && (
-                                    <span className="text-sm text-estate-steel">Under review</span>
+                                    <span className="text-sm text-estate-steel">En revisión</span>
                                   )}
                                 </TableCell>
                               </TableRow>

@@ -20,7 +20,17 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
   });
   
   const getTypeLabel = () => {
-    return asset.type.charAt(0).toUpperCase() + asset.type.slice(1);
+    const typeTranslations: Record<string, string> = {
+      'residential': 'Residencial',
+      'commercial': 'Comercial',
+      'greenfield': 'Greenfield',
+      'brownfield': 'Brownfield',
+      'land': 'Terreno',
+      'hotel': 'Hotel',
+      'industrial': 'Industrial',
+      'mixed': 'Mixto'
+    };
+    return typeTranslations[asset.type] || asset.type.charAt(0).toUpperCase() + asset.type.slice(1);
   };
   
   const getPurposeColor = () => {
@@ -39,11 +49,11 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
   const getPurposeLabel = () => {
     switch (asset.purpose) {
       case 'sale':
-        return 'For Sale';
+        return 'En Venta';
       case 'purchase':
-        return 'For Purchase';
+        return 'En Compra';
       case 'need':
-        return 'Need';
+        return 'Necesidad';
       default:
         return asset.purpose;
     }
@@ -72,24 +82,24 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
             
             <div className="flex items-center gap-2 text-sm text-estate-steel">
               <Calendar className="h-4 w-4" />
-              <span>Listed on {formattedDate}</span>
+              <span>Publicado el {formattedDate}</span>
             </div>
           </div>
           
           <div className="bg-estate-offwhite rounded p-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-estate-steel">Asset Type</span>
+              <span className="text-sm text-estate-steel">Tipo de Activo</span>
               <span className="font-medium">{getTypeLabel()}</span>
             </div>
             
             <div className="flex justify-between items-center mt-1">
-              <span className="text-sm text-estate-steel">Price</span>
+              <span className="text-sm text-estate-steel">Precio</span>
               <span className="font-medium">{formattedPrice}</span>
             </div>
             
             {asset.expectedReturn && (
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-estate-steel">Expected Return</span>
+                <span className="text-sm text-estate-steel">Retorno Esperado</span>
                 <div className="flex items-center gap-1">
                   <TrendingUp className="h-3.5 w-3.5 text-green-600" />
                   <span className="font-medium">{asset.expectedReturn}%</span>
@@ -115,7 +125,7 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
             onClick={() => onRequestInfo(asset.id)}
           >
             <Info className="h-4 w-4 mr-2" />
-            Request Information
+            Solicitar Información
           </Button>
         </CardFooter>
       )}

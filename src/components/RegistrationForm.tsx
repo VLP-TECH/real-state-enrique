@@ -62,13 +62,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   const getRoleLabel = (role: UserRole): string => {
     switch (role) {
       case 'seller_mandatary':
-        return 'Seller Mandatary';
+        return 'Mandatario de Venta';
       case 'buyer_mandatary':
-        return 'Buyer Mandatary';
+        return 'Mandatario de Compra';
       case 'investor':
-        return 'Investor / Family Office';
+        return 'Inversor / Family Office';
       case 'admin':
-        return 'Administrator';
+        return 'Administrador';
       default:
         return role;
     }
@@ -81,15 +81,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           <div className="w-16 h-16 rounded-full bg-estate-success/20 flex items-center justify-center mb-6">
             <Check className="h-8 w-8 text-estate-success" />
           </div>
-          <h2 className="text-2xl font-semibold text-estate-slate mb-2">Registration Submitted</h2>
+          <h2 className="text-2xl font-semibold text-estate-slate mb-2">Solicitud Enviada</h2>
           <p className="text-estate-steel mb-4">
-            Thank you for your interest in Real Estate Private Club. Your registration has been received and will be reviewed manually by our team.
+            Gracias por su interés en Club Privado de Inmobiliarias. Su solicitud ha sido recibida y será revisada manualmente por nuestro equipo.
           </p>
           <p className="text-sm text-estate-charcoal mb-6">
-            We'll contact you soon with next steps. For security reasons, registration approval is a manual process.
+            Nos pondremos en contacto pronto con los siguientes pasos. Por razones de seguridad, la aprobación de registro es un proceso manual.
           </p>
           <div className="border border-estate-lightgrey rounded-md p-4 bg-estate-offwhite w-full">
-            <p className="text-sm text-estate-steel mb-1">Registration Reference:</p>
+            <p className="text-sm text-estate-steel mb-1">Referencia de Registro:</p>
             <p className="font-mono text-estate-navy">{`REG-${Math.floor(100000 + Math.random() * 900000)}`}</p>
           </div>
         </CardContent>
@@ -100,19 +100,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Join Real Estate Private Club</CardTitle>
+        <CardTitle>Únase al Club Privado de Inmobiliarias</CardTitle>
         <CardDescription>
-          Apply for membership to access exclusive real estate opportunities
+          Solicite membresía para acceder a oportunidades inmobiliarias exclusivas
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name <span className="text-estate-error">*</span></Label>
+            <Label htmlFor="fullName">Nombre Completo <span className="text-estate-error">*</span></Label>
             <Input
               id="fullName"
               name="fullName"
-              placeholder="Enter your full name"
+              placeholder="Ingrese su nombre completo"
               value={formData.fullName}
               onChange={handleChange}
               required
@@ -120,12 +120,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address <span className="text-estate-error">*</span></Label>
+            <Label htmlFor="email">Correo Electrónico <span className="text-estate-error">*</span></Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="Ingrese su correo electrónico"
               value={formData.email}
               onChange={handleChange}
               required
@@ -133,11 +133,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number <span className="text-estate-error">*</span></Label>
+            <Label htmlFor="phone">Número de Teléfono <span className="text-estate-error">*</span></Label>
             <Input
               id="phone"
               name="phone"
-              placeholder="Enter your phone number"
+              placeholder="Ingrese su número de teléfono"
               value={formData.phone}
               onChange={handleChange}
               required
@@ -145,11 +145,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="company">Company <span className="text-estate-error">*</span></Label>
+            <Label htmlFor="company">Empresa <span className="text-estate-error">*</span></Label>
             <Input
               id="company"
               name="company"
-              placeholder="Enter your company name"
+              placeholder="Ingrese el nombre de su empresa"
               value={formData.company}
               onChange={handleChange}
               required
@@ -157,10 +157,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role">Your Role <span className="text-estate-error">*</span></Label>
+            <Label htmlFor="role">Su Rol <span className="text-estate-error">*</span></Label>
             <Select value={formData.role} onValueChange={handleRoleChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Select your role" />
+                <SelectValue placeholder="Seleccione su rol" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="buyer_mandatary">{getRoleLabel('buyer_mandatary')}</SelectItem>
@@ -171,11 +171,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="message">Message (Optional)</Label>
+            <Label htmlFor="message">Mensaje (Opcional)</Label>
             <Textarea
               id="message"
               name="message"
-              placeholder="Tell us about your real estate interests or experience..."
+              placeholder="Cuéntenos sobre sus intereses inmobiliarios o experiencia..."
               rows={3}
               value={formData.message}
               onChange={handleChange}
@@ -184,12 +184,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
           
           <div className="pt-4">
             <p className="text-xs text-estate-steel mb-4">
-              By submitting this form, you agree to our strict confidentiality policies. All members must sign an NDA before accessing detailed information. Your application will be reviewed manually for security purposes.
+              Al enviar este formulario, acepta nuestras estrictas políticas de confidencialidad. Todos los miembros deben firmar un NDA antes de acceder a información detallada. Su solicitud será revisada manualmente por motivos de seguridad.
             </p>
           </div>
           
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit Application'}
+            {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
           </Button>
         </form>
       </CardContent>

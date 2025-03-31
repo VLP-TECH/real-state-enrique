@@ -29,8 +29,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
       setIsSubmitting(false);
       setNotes('');
       toast({
-        title: "Request submitted",
-        description: "Your information request has been sent to the administrator for review.",
+        title: "Solicitud enviada",
+        description: "Su solicitud de información ha sido enviada al administrador para su revisión.",
       });
       onClose();
     }, 1000);
@@ -42,35 +42,35 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Request Asset Information</DialogTitle>
+          <DialogTitle>Solicitar Información del Activo</DialogTitle>
           <DialogDescription>
-            Your request will be sent to the administrator for review. You'll be notified of any updates.
+            Su solicitud será enviada al administrador para su revisión. Se le notificará cualquier actualización.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="bg-estate-offwhite p-3 rounded text-sm">
             <div className="flex justify-between">
-              <span className="text-estate-steel">Asset ID:</span>
+              <span className="text-estate-steel">ID del Activo:</span>
               <span className="font-medium">{asset.id}</span>
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-estate-steel">Type:</span>
+              <span className="text-estate-steel">Tipo:</span>
               <span className="font-medium capitalize">{asset.type}</span>
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-estate-steel">Location:</span>
+              <span className="text-estate-steel">Ubicación:</span>
               <span className="font-medium">{asset.location.city}, {asset.location.country}</span>
             </div>
           </div>
           
           <div className="space-y-2">
             <label className="text-sm font-medium text-estate-slate" htmlFor="notes">
-              Additional notes (optional)
+              Notas adicionales (opcional)
             </label>
             <Textarea 
               id="notes"
-              placeholder="Explain why you're interested in this asset..."
+              placeholder="Explique por qué está interesado en este activo..."
               className="resize-none"
               rows={4}
               value={notes}
@@ -80,9 +80,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Request"}
+            {isSubmitting ? "Enviando..." : "Enviar Solicitud"}
           </Button>
         </DialogFooter>
       </DialogContent>
