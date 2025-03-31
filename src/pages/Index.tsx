@@ -45,12 +45,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-estate-offwhite">
       <header className="bg-estate-navy text-white relative">
-        {/* Top navigation bar */}
+        {/* Top navigation bar - Make the gold color more prominent */}
         <div className="estate-container py-3">
           <div className="flex justify-between items-center">
             <Button 
               variant="link" 
-              className="text-estate-gold hover:text-estate-gold/90 p-0"
+              className="text-estate-gold font-medium hover:text-white hover:bg-estate-gold/20 p-2 rounded-md transition-colors"
               onClick={handleRegisterClick}
             >
               Request access
@@ -58,22 +58,22 @@ const Index = () => {
             
             <div className="flex flex-col items-center">
               <Logo size="lg" className="mb-1" />
-              <h1 className="uppercase tracking-widest text-xs text-estate-gold font-light">
+              <h1 className="uppercase tracking-widest text-sm text-estate-gold font-medium">
                 Henry Williams & Partners
               </h1>
             </div>
             
             <div className="flex gap-4 items-center">
-              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+              <Button variant="link" className="text-estate-gold font-medium hover:text-white hover:bg-estate-gold/20 p-2 rounded-md transition-colors">
                 About
               </Button>
-              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+              <Button variant="link" className="text-estate-gold font-medium hover:text-white hover:bg-estate-gold/20 p-2 rounded-md transition-colors">
                 Member benefits
               </Button>
-              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+              <Button variant="link" className="text-estate-gold font-medium hover:text-white hover:bg-estate-gold/20 p-2 rounded-md transition-colors">
                 Privacy
               </Button>
-              <Button variant="link" className="text-estate-gold hover:text-estate-gold/90 p-0">
+              <Button variant="link" className="text-estate-gold font-medium hover:text-white hover:bg-estate-gold/20 p-2 rounded-md transition-colors">
                 Login
               </Button>
             </div>
@@ -82,7 +82,7 @@ const Index = () => {
         
         <div className="estate-container py-16 md:py-20 relative z-10">
           <div className="flex justify-center">
-            <Card className="w-full max-w-md border-estate-gold">
+            <Card className="w-full max-w-md border-estate-gold shadow-lg">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-estate-slate">Acceso Restringido</CardTitle>
                 <CardDescription>Ingrese sus credenciales para acceder a la plataforma</CardDescription>
@@ -120,7 +120,7 @@ const Index = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-estate-gold hover:bg-estate-gold/90 text-estate-navy"
+                    className="w-full bg-estate-gold hover:bg-estate-gold/90 text-estate-navy font-medium"
                   >
                     Acceder
                   </Button>
@@ -132,7 +132,7 @@ const Index = () => {
                 </p>
                 <Button 
                   variant="outline"
-                  className="w-full border-estate-gold text-estate-gold hover:bg-estate-gold hover:text-estate-navy"
+                  className="w-full border-estate-gold text-estate-gold hover:bg-estate-gold hover:text-estate-navy font-medium"
                   onClick={handleRegisterClick}
                 >
                   Solicitar Acceso
