@@ -24,10 +24,10 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone <https://lovable.dev/projects/2aece23a-586f-476d-928c-d5ec1a6fcc80>
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd <c:\Users\josep\OneDrive\Documentos\secure-property-exchange>
 
 # Step 3: Install the necessary dependencies.
 npm i
