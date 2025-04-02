@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RegistrationFormData } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Building, Users, Shield, ChevronRight, Mail } from 'lucide-react';
+import { Lock, Building, Users, Shield, ChevronRight, Mail, Menu } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import Logo from '@/components/Logo';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -61,21 +67,46 @@ const Index = () => {
             
             <div className="flex w-full flex-col items-center">
               <Logo size="lg" className="mb-1" />
-              <h1 className="uppercase tracking-widest text-sm text-[#E1D48A] font-semibold">
+              <h1 className="uppercase tracking-widest text-sm text-[#E1D48A] font-semibold text-center">
                 Henry Williams & Partners
               </h1>
             </div>
             
             <div className="flex w-full gap-4 items-center justify-end">
-              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
-                About
-              </Button>
-              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
-                Member benefits
-              </Button>
-              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
-                Privacy
-              </Button>
+              {/* Desktop navigation - visible on medium screens and up */}
+              <div className="hidden md:flex gap-4">
+                <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
+                  About
+                </Button>
+                <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
+                  Member benefits
+                </Button>
+                <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
+                  Privacy
+                </Button>
+              </div>
+              
+              {/* Mobile navigation - visible on small screens */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-[#E1D48A] hover:text-white hover:bg-[#E1D48A]/30 rounded-md transition-colors">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-estate-navy border-[#E1D48A]">
+                    <DropdownMenuItem className="text-[#E1D48A] hover:text-white hover:bg-[#E1D48A]/30 cursor-pointer">
+                      About
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-[#E1D48A] hover:text-white hover:bg-[#E1D48A]/30 cursor-pointer">
+                      Member benefits
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-[#E1D48A] hover:text-white hover:bg-[#E1D48A]/30 cursor-pointer">
+                      Privacy
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>
@@ -166,7 +197,7 @@ const Index = () => {
       </footer>
       
       <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle className="text-estate-navy font-sans">Solicitud de Acceso</DialogTitle>
           </DialogHeader>

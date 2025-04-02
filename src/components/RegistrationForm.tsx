@@ -76,7 +76,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   
   if (isSubmitted) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-5xl mx-auto">
         <CardContent className="pt-6 flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-full bg-estate-success/20 flex items-center justify-center mb-6">
             <Check className="h-8 w-8 text-estate-success" />
@@ -98,7 +98,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   }
   
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-5xl mx-auto">
       <CardHeader>
         <CardTitle>Únase al Club Privado de Inmobiliarias</CardTitle>
         <CardDescription>
@@ -106,80 +106,88 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Nombre Completo <span className="text-estate-error">*</span></Label>
-            <Input
-              id="fullName"
-              name="fullName"
-              placeholder="Ingrese su nombre completo"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo Electrónico <span className="text-estate-error">*</span></Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Ingrese su correo electrónico"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="phone">Número de Teléfono <span className="text-estate-error">*</span></Label>
-            <Input
-              id="phone"
-              name="phone"
-              placeholder="Ingrese su número de teléfono"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="company">Empresa <span className="text-estate-error">*</span></Label>
-            <Input
-              id="company"
-              name="company"
-              placeholder="Ingrese el nombre de su empresa"
-              value={formData.company}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="role">Su Rol <span className="text-estate-error">*</span></Label>
-            <Select value={formData.role} onValueChange={handleRoleChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccione su rol" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="buyer_mandatary">{getRoleLabel('buyer_mandatary')}</SelectItem>
-                <SelectItem value="seller_mandatary">{getRoleLabel('seller_mandatary')}</SelectItem>
-                <SelectItem value="investor">{getRoleLabel('investor')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="message">Mensaje (Opcional)</Label>
-            <Textarea
-              id="message"
-              name="message"
-              placeholder="Cuéntenos sobre sus intereses inmobiliarios o experiencia..."
-              rows={3}
-              value={formData.message}
-              onChange={handleChange}
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nombre Completo <span className="text-estate-error">*</span></Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  placeholder="Ingrese su nombre completo"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo Electrónico <span className="text-estate-error">*</span></Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Ingrese su correo electrónico"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Número de Teléfono <span className="text-estate-error">*</span></Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  placeholder="Ingrese su número de teléfono"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            {/* Right Column */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Empresa <span className="text-estate-error">*</span></Label>
+                <Input
+                  id="company"
+                  name="company"
+                  placeholder="Ingrese el nombre de su empresa"
+                  value={formData.company}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="role">Su Rol <span className="text-estate-error">*</span></Label>
+                <Select value={formData.role} onValueChange={handleRoleChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione su rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buyer_mandatary">{getRoleLabel('buyer_mandatary')}</SelectItem>
+                    <SelectItem value="seller_mandatary">{getRoleLabel('seller_mandatary')}</SelectItem>
+                    <SelectItem value="investor">{getRoleLabel('investor')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Mensaje (Opcional)</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  placeholder="Cuéntenos sobre sus intereses inmobiliarios o experiencia..."
+                  rows={3}
+                  value={formData.message}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
           </div>
           
           <div className="pt-4">
