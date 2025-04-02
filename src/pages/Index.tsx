@@ -76,9 +76,6 @@ const Index = () => {
               <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 Privacy
               </Button>
-              <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
-                Login
-              </Button>
             </div>
           </div>
         </div>
