@@ -285,6 +285,7 @@ const Dashboard: React.FC = () => {
               <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Descubrir Activos</TabsTrigger>
               <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Activos</TabsTrigger>
               <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Solicitudes</TabsTrigger>
+              <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Subir Activo</TabsTrigger>
             </TabsList>
             
             <TabsContent value="discover" className="mt-6">
@@ -304,8 +305,6 @@ const Dashboard: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="my-assets" className="mt-6 space-y-6">
-              <AssetForm onSubmit={handleAssetSubmit} />
-              
               <Card>
                 <CardHeader>
                   <CardTitle>Mis Activos Enviados</CardTitle>
@@ -412,6 +411,10 @@ const Dashboard: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="new-asset" className="mt-6 space-y-6">
+              <AssetForm onSubmit={handleAssetSubmit} />
             </TabsContent>
           </Tabs>
         </div>
