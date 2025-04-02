@@ -48,22 +48,25 @@ const Index = () => {
         {/* Top navigation bar - Make the gold color more prominent */}
         <div className="estate-container py-3 relative z-20">
           <div className="flex justify-between items-center">
-            <Button 
-              variant="link" 
-              className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors"
-              onClick={handleRegisterClick}
-            >
-              Request access
-            </Button>
             
-            <div className="flex flex-col items-center">
+            <div className="flex w-full items-center">
+              <Button 
+                variant="link" 
+                className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors"
+                onClick={handleRegisterClick}
+              >
+                Request access
+              </Button>
+            </div>
+            
+            <div className="flex w-full flex-col items-center">
               <Logo size="lg" className="mb-1" />
               <h1 className="uppercase tracking-widest text-sm text-[#E1D48A] font-semibold">
                 Henry Williams & Partners
               </h1>
             </div>
             
-            <div className="flex gap-4 items-center">
+            <div className="flex w-full gap-4 items-center justify-end">
               <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                 About
               </Button>
