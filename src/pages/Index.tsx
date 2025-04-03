@@ -197,7 +197,7 @@ const Index = () => {
       </footer>
       
       <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
-        <DialogContent className="bg-white">
+        <DialogContent className="bg-white max-w-2xl max-h-[calc(100vh-0rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-estate-navy font-sans">Solicitud de Acceso</DialogTitle>
           </DialogHeader>
