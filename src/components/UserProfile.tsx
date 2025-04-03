@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { supabase } from '@/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import AuthManager from '@/components/AuthManager';
 
 interface UserProfileProps {
   user: User;
@@ -12,7 +13,8 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   const { toast } = useToast();
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { handleLogout } = AuthManager();
 
   const getRoleDisplay = (role: UserRole): string => {
     switch (role) {
@@ -27,15 +29,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
       default:
         return role;
     }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: 'Sesión Cerrada',
-      description: 'Has cerrado sesión correctamente.',
-    });
-    navigate('/');
   };
 
   return (

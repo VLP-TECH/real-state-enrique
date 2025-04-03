@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RegistrationFormData } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Building, Users, Shield, ChevronRight, Mail, Menu } from 'lucide-react';
+import { Lock, Mail, Menu } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -12,16 +12,15 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import Logo from '@/components/Logo';
-import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import RegistrationForm from '@/components/RegistrationForm';
-import { supabase } from '@/supabaseClient';
+import AuthManager from '@/components/AuthManager';
 
 const Index = () => {
+  const { handleLogin } = AuthManager();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,42 +38,10 @@ const Index = () => {
     setShowRegistrationForm(false);
   };
   
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-  
-    if (error) {
-      toast({
-        title: 'Error en el Inicio de Sesión',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return;
-    }
-  
-    toast({
-      title: 'Inicio de Sesión Exitoso',
-      description: `Bienvenido, ${data.user?.email}`,
-    });
-  
-    navigate('/dashboard');
+    await handleLogin(email, password); // Usar la función handleLogin de AuthManager
   };
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        navigate('/dashboard');
-      }
-    };
-  
-    checkUser();
-  }, []);
   
   return (
     <div className="min-h-screen bg-estate-offwhite">
@@ -147,7 +114,7 @@ const Index = () => {
                 <CardDescription>Ingrese sus credenciales para acceder a la plataforma</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-estate-slate">Correo Electrónico</Label>
                     <div className="relative">
