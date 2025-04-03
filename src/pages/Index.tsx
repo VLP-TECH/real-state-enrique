@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RegistrationFormData } from '@/utils/types';
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import RegistrationForm from '@/components/RegistrationForm';
+import { supabase } from '@/supabaseClient';
 
 const Index = () => {
   const { toast } = useToast();
@@ -38,15 +39,42 @@ const Index = () => {
     setShowRegistrationForm(false);
   };
   
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempted with:', { email, password });
-    navigate('/dashboard');
+  
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+  
+    if (error) {
+      toast({
+        title: 'Error en el Inicio de Sesión',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+  
     toast({
       title: 'Inicio de Sesión Exitoso',
-      description: 'Bienvenido de nuevo a Henry Williams & Partners.',
+      description: `Bienvenido, ${data.user?.email}`,
     });
+  
+    navigate('/dashboard');
   };
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        navigate('/dashboard');
+      }
+    };
+  
+    checkUser();
+  }, []);
   
   return (
     <div className="min-h-screen bg-estate-offwhite">

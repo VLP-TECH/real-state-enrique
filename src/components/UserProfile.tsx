@@ -1,12 +1,19 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, UserRole } from "@/utils/types";
+import { Button } from "./ui/button";
+import { supabase } from '@/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfileProps {
   user: User;
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+  const { toast } = useToast();
+    const navigate = useNavigate();
+
   const getRoleDisplay = (role: UserRole): string => {
     switch (role) {
       case 'seller_mandatary':
@@ -22,6 +29,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: 'Sesión Cerrada',
+      description: 'Has cerrado sesión correctamente.',
+    });
+    navigate('/');
+  };
+
   return (
     <Card className="w-full shadow-sm border-estate-lightgrey">
       <CardHeader className="bg-estate-navy text-white py-4 px-6 flex flex-row items-center justify-between">
@@ -29,8 +45,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           <h3 className="text-xl font-semibold">ID Anónimo: {user.id}</h3>
           <p className="text-estate-lightgrey text-sm">Miembro desde {new Date(user.registrationDate).toLocaleDateString()}</p>
         </div>
-        <div className="bg-estate-steel text-white text-sm py-1 px-3 rounded-full">
-          {getRoleDisplay(user.role)}
+        <div className="flex items-center gap-5">
+          <div className="bg-estate-steel text-white text-sm py-1 px-3 rounded-full">
+            {getRoleDisplay(user.role)}
+          </div>
+          <Button
+            variant="outline" 
+            className="border-[#E1D48A] text-[#E1D48A] hover:bg-[#E1D48A] hover:text-estate-navy"
+            onClick={handleLogout}
+          >
+            Cerrar Sesión
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-6">

@@ -369,7 +369,7 @@ const Dashboard: React.FC = () => {
                                       size="sm" 
                                       variant="outline" 
                                       onClick={() => handleSignNda(request.id)}
-                                      className="flex items-center gap-1"
+                                      className="flex items-center gap-1 w-full"
                                     >
                                       <FileText className="h-3 w-3" />
                                       <span>Firmar NDA</span>
