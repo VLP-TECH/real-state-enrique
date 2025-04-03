@@ -288,7 +288,7 @@ const Dashboard: React.FC = () => {
               <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Subir Activo</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="discover" className="mt-6">
+            <TabsContent value="discover" className="mt-16 md:mt-6">
               <AssetList 
                 assets={mockAssets.filter(asset => asset.ownerId !== mockUser.id)} 
                 onRequestInfo={handleRequestInfo} 
@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
               />
             </TabsContent>
             
-            <TabsContent value="my-assets" className="mt-6 space-y-6">
+            <TabsContent value="my-assets" className="mt-16 md:mt-6 space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Mis Activos Enviados</CardTitle>
@@ -325,7 +325,7 @@ const Dashboard: React.FC = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="requests" className="mt-6">
+            <TabsContent value="requests" className="mt-16 md:mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Solicitudes de Información</CardTitle>
@@ -413,7 +413,7 @@ const Dashboard: React.FC = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="new-asset" className="mt-6 space-y-6">
+            <TabsContent value="new-asset" className="mt-16 md:mt-6 space-y-6">
               <AssetForm onSubmit={handleAssetSubmit} />
             </TabsContent>
           </Tabs>
