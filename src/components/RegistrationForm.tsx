@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RegistrationFormData, UserRole } from '@/utils/types';
 import { Check } from 'lucide-react';
+import { supabase } from '@/supabaseClient';
 
 interface RegistrationFormProps {
   onSubmit: (data: RegistrationFormData) => void;
@@ -22,10 +22,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
     role: 'buyer_mandatary',
     message: '',
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
@@ -33,32 +33,54 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
       [name]: value,
     });
   };
-  
+
   const handleRoleChange = (value: string) => {
     setFormData({
       ...formData,
       role: value as UserRole,
     });
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
+
+    // Validación básica
     if (!formData.fullName || !formData.email || !formData.phone || !formData.company || !formData.role) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    // Enviar los datos a la tabla 'solicitudes' en Supabase
+    try {
+      const { data, error } = await supabase
+        .from('solicitudes')
+        .insert([
+          {
+            nombre_completo: formData.fullName,
+            correo_electronico: formData.email,
+            numero_telefono: formData.phone,
+            empresa: formData.company,
+            su_rol: formData.role,
+            mensaje: formData.message || null,
+            estado: 'pendiente',
+          },
+        ]);
+
+      if (error) {
+        throw error;
+      }
+
+      // Llamar al `onSubmit` y actualizar el estado
       onSubmit(formData);
       setIsSubmitting(false);
       setIsSubmitted(true);
-    }, 1500);
+    } catch (error) {
+      console.error('Error al enviar la solicitud:', error);
+      setIsSubmitting(false);
+    }
   };
-  
+
   const getRoleLabel = (role: UserRole): string => {
     switch (role) {
       case 'seller_mandatary':
@@ -73,10 +95,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
         return role;
     }
   };
-  
+
   if (isSubmitted) {
     return (
-    <Card className="w-full max-w-5xl mx-auto">
+      <Card className="w-full max-w-5xl mx-auto">
         <CardContent className="pt-6 flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-full bg-estate-success/20 flex items-center justify-center mb-6">
             <Check className="h-8 w-8 text-estate-success" />
@@ -96,7 +118,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
       </Card>
     );
   }
-  
+
   return (
     <Card className="w-full max-w-5xl mx-auto">
       <CardHeader>
@@ -121,7 +143,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico <span className="text-estate-error">*</span></Label>
                 <Input
@@ -134,7 +156,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Número de Teléfono <span className="text-estate-error">*</span></Label>
                 <Input
@@ -147,7 +169,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                 />
               </div>
             </div>
-            
+
             {/* Right Column */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -161,7 +183,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="role">Su Rol <span className="text-estate-error">*</span></Label>
                 <Select value={formData.role} onValueChange={handleRoleChange}>
@@ -175,7 +197,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="message">Mensaje (Opcional)</Label>
                 <Textarea
@@ -189,13 +211,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="pt-4">
             <p className="text-xs text-estate-steel mb-4">
               Al enviar este formulario, acepta nuestras estrictas políticas de confidencialidad. Todos los miembros deben firmar un NDA antes de acceder a información detallada. Su solicitud será revisada manualmente por motivos de seguridad.
             </p>
           </div>
-          
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
           </Button>
