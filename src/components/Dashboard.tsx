@@ -182,76 +182,99 @@ const mockRequests: InformationRequest[] = [
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-  const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
-  const [userAssets, setUserAssets] = useState<Asset[]>(mockAssets.filter(asset => asset.ownerId === mockUser.id));
-  const [userRequests, setUserRequests] = useState<InformationRequest[]>(mockRequests);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
+const [userAssets, setUserAssets] = useState<Asset[]>(mockAssets.filter(asset => asset.ownerId === mockUser.id));
+const [userRequests, setUserRequests] = useState<InformationRequest[]>(mockRequests);
+const [userProfile, setUserProfile] = useState<User | null>(null);
+const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-  
-      if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (profile) {
-          // Actualiza el estado del perfil del usuario
-          setUserProfile({
-            id: user.id,
-            role: profile.role || 'buyer_mandatary', // valor por defecto
-            registrationDate: user.created_at,
-            isApproved: profile.is_approved || false,
-            fullName: profile.full_name || '',
-            email: user.email || '',
-            assetsCount: 0, // puedes obtener esto de otra consulta
-            requestsCount: 0 // puedes obtener esto de otra consulta
-          });
-          
-          if (profile.admin) {
-            setIsAdmin(true);
-          }
+// NUEVO: Estado para solicitudes desde Supabase
+const [solicitudes, setSolicitudes] = useState<any[]>([]);
+const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
+
+useEffect(() => {
+  const fetchProfile = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (profile) {
+        setUserProfile({
+          id: user.id,
+          role: profile.role || 'buyer_mandatary',
+          registrationDate: user.created_at,
+          isApproved: profile.is_approved || false,
+          fullName: profile.full_name || '',
+          email: user.email || '',
+          assetsCount: 0,
+          requestsCount: 0
+        });
+        
+        if (profile.admin) {
+          setIsAdmin(true);
         }
-      } else {
-        console.log('No user is authenticated');
       }
-    };
-  
-    fetchProfile();
-  }, []); 
-
-  const handleRequestInfo = (assetId: string) => {
-    const asset = mockAssets.find(a => a.id === assetId);
-    if (asset) {
-      setSelectedAsset(asset);
-      setIsRequestFormOpen(true);
+    } else {
+      console.log('No user is authenticated');
     }
   };
 
-  const handleRequestSubmit = (assetId: string, notes: string) => {
-    // Lógica para manejar el envío de solicitudes
+  fetchProfile();
+}, []);
+
+useEffect(() => {
+  const fetchSolicitudes = async () => {
+    if (isAdmin) {
+      console.log("Fetching solicitudes..."); // <-- Este debe aparecer en consola
+      try {
+        const { data, error } = await supabase.from('solicitudes').select('*');
+        if (error) throw error;
+        console.log("Solicitudes recibidas:", data); // <-- Aquí deberías ver las solicitudes
+        setSolicitudes(data || []);
+      } catch (error) {
+        console.error('Error al obtener solicitudes:', error);
+      } finally {
+        setLoadingSolicitudes(false);
+      }
+    }
   };
 
-  const handleSignNda = (requestId: string) => {
-    // Lógica para manejar la firma de NDA
-  };
+  fetchSolicitudes();
+}, [isAdmin]);
 
-  const handleAssetSubmit = (data: AssetFormData) => {
-    // Lógica para manejar el envío de activos
-  };  
-
-  const getAssetById = (assetId: string) => {
-    return mockAssets.find(asset => asset.id === assetId) || null;
-  };  
-
-  if (!userProfile) {
-    return <div>Loading...</div>;
+const handleRequestInfo = (assetId: string) => {
+  const asset = mockAssets.find(a => a.id === assetId);
+  if (asset) {
+    setSelectedAsset(asset);
+    setIsRequestFormOpen(true);
   }
+};
+
+const handleRequestSubmit = (assetId: string, notes: string) => {
+  // Lógica para manejar el envío de solicitudes
+};
+
+const handleSignNda = (requestId: string) => {
+  // Lógica para manejar la firma de NDA
+};
+
+const handleAssetSubmit = (data: AssetFormData) => {
+  // Lógica para manejar el envío de activos
+};
+
+const getAssetById = (assetId: string) => {
+  return mockAssets.find(asset => asset.id === assetId) || null;
+};
+
+if (!userProfile) {
+  return <div>Loading...</div>;
+}
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -394,9 +417,28 @@ const Dashboard: React.FC = () => {
                     <CardTitle>Gestión de Usuarios</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {/* Aquí puedes agregar cualquier funcionalidad para el administrador, por ejemplo */}
-                    <Button size="sm" variant="outline">Gestionar usuarios</Button>
-                    <Button size="sm" variant="outline">Ver Logs de Actividad</Button>
+                    {loadingSolicitudes ? (
+                      <p>Cargando solicitudes...</p>
+                    ) : solicitudes.length === 0 ? (
+                      <p>No hay solicitudes disponibles.</p>
+                    ) : (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Solicitudes de Membresía:</h3>
+                        <ul className="space-y-4">
+                          {solicitudes.map((solicitud) => (
+                            <li key={solicitud.id} className="p-4 border rounded-md">
+                              <p><strong>Nombre:</strong> {solicitud.nombre_completo}</p>
+                              <p><strong>Email:</strong> {solicitud.correo_electronico}</p>
+                              <p><strong>Teléfono:</strong> {solicitud.numero_telefono}</p>
+                              <p><strong>Empresa:</strong> {solicitud.empresa}</p>
+                              <p><strong>Rol:</strong> {solicitud.su_rol}</p>
+                              <p><strong>Mensaje:</strong> {solicitud.mensaje || 'No hay mensaje'}</p>
+                              <p><strong>Estado:</strong> {solicitud.estado === 0 ? 'Pendiente' : 'Aprobado'}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
