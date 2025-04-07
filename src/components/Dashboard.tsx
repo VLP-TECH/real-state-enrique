@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserProfile from './UserProfile';
 import AssetForm from './AssetForm';
@@ -11,10 +10,11 @@ import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { FileText, Eye, X, Check, AlertCircle } from 'lucide-react';
+import { FileText, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/supabaseClient';
+import checkUserSession from '@/components/AuthManager';
 
-// Mock data
 const mockUser: User = {
   id: 'ZX_2301',
   role: 'buyer_mandatary',
@@ -184,50 +184,47 @@ const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
-  const [userAssets, setUserAssets] = useState<Asset[]>(
-    mockAssets.filter(asset => asset.ownerId === mockUser.id)
-  );
+  const [userAssets, setUserAssets] = useState<Asset[]>(mockAssets.filter(asset => asset.ownerId === mockUser.id));
   const [userRequests, setUserRequests] = useState<InformationRequest[]>(mockRequests);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
   
-  const handleAssetSubmit = (data: AssetFormData) => {
-    // In a real app, this would be an API call
-    const newAsset: Asset = {
-      id: `AS_${Math.floor(1000 + Math.random() * 9000)}`,
-      purpose: data.purpose,
-      type: data.type,
-      location: {
-        country: data.country,
-        city: data.city,
-        area: data.area,
-      },
-      expectedReturn: data.expectedReturn,
-      price: {
-        amount: data.priceAmount,
-        currency: data.priceCurrency,
-      },
-      description: data.description,
-      createdAt: new Date().toISOString(),
-      ownerId: mockUser.id,
-      // In a real app, files would be uploaded to storage
-      files: data.files?.map(file => ({
-        type: file.type.startsWith('image/') 
-          ? 'image' 
-          : file.type.startsWith('video/') 
-            ? 'video' 
-            : 'pdf',
-        name: file.name,
-      })),
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (profile) {
+          // Actualiza el estado del perfil del usuario
+          setUserProfile({
+            id: user.id,
+            role: profile.role || 'buyer_mandatary', // valor por defecto
+            registrationDate: user.created_at,
+            isApproved: profile.is_approved || false,
+            fullName: profile.full_name || '',
+            email: user.email || '',
+            assetsCount: 0, // puedes obtener esto de otra consulta
+            requestsCount: 0 // puedes obtener esto de otra consulta
+          });
+          
+          if (profile.admin) {
+            setIsAdmin(true);
+          }
+        }
+      } else {
+        console.log('No user is authenticated');
+      }
     };
-    
-    setUserAssets([...userAssets, newAsset]);
-    mockUser.assetsCount = (mockUser.assetsCount || 0) + 1;
-    
-    toast({
-      title: "Activo enviado correctamente",
-      description: `Su activo ${newAsset.id} ha sido enviado para revisión.`,
-    });
-  };
   
+    fetchProfile();
+  }, []); 
+
   const handleRequestInfo = (assetId: string) => {
     const asset = mockAssets.find(a => a.id === assetId);
     if (asset) {
@@ -235,43 +232,27 @@ const Dashboard: React.FC = () => {
       setIsRequestFormOpen(true);
     }
   };
-  
+
   const handleRequestSubmit = (assetId: string, notes: string) => {
-    // In a real app, this would be an API call
-    const newRequest: InformationRequest = {
-      id: `RQ_${Math.floor(1000 + Math.random() * 9000)}`,
-      assetId,
-      requesterId: mockUser.id,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      notes,
-    };
-    
-    setUserRequests([...userRequests, newRequest]);
-    mockUser.requestsCount = (mockUser.requestsCount || 0) + 1;
+    // Lógica para manejar el envío de solicitudes
   };
-  
-  const getAssetById = (assetId: string): Asset | undefined => {
-    return mockAssets.find(asset => asset.id === assetId);
-  };
-  
+
   const handleSignNda = (requestId: string) => {
-    // In a real app, this would open a document signing flow
-    setUserRequests(
-      userRequests.map(req => 
-        req.id === requestId 
-          ? { ...req, status: 'nda_received', ndaSignedDate: new Date().toISOString(), updatedAt: new Date().toISOString() } 
-          : req
-      )
-    );
-    
-    toast({
-      title: "NDA Firmado",
-      description: "Su NDA firmado ha sido enviado para revisión.",
-    });
+    // Lógica para manejar la firma de NDA
   };
-  
+
+  const handleAssetSubmit = (data: AssetFormData) => {
+    // Lógica para manejar el envío de activos
+  };  
+
+  const getAssetById = (assetId: string) => {
+    return mockAssets.find(asset => asset.id === assetId) || null;
+  };  
+
+  if (!userProfile) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container mx-auto p-4 space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -282,19 +263,33 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-3">
           <Tabs defaultValue="discover" className="w-full">
             <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex border-[#E1D48A]">
-              <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Descubrir Activos</TabsTrigger>
-              <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Activos</TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Mis Solicitudes</TabsTrigger>
-              <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">Subir Activo</TabsTrigger>
+              <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                Descubrir Activos
+              </TabsTrigger>
+              <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                Mis Activos
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                Mis Solicitudes
+              </TabsTrigger>
+              <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                Subir Activo
+              </TabsTrigger>
+
+              {/* Este TabsTrigger es para los Admins */}
+              {isAdmin && (
+                <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                  Panel de Admin
+                </TabsTrigger>
+              )}
             </TabsList>
-            
+
             <TabsContent value="discover" className="mt-16 md:mt-6">
               <AssetList 
                 assets={mockAssets.filter(asset => asset.ownerId !== mockUser.id)} 
                 onRequestInfo={handleRequestInfo} 
                 buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy" 
               />
-              
               <RequestForm
                 asset={selectedAsset}
                 open={isRequestFormOpen}
@@ -303,7 +298,7 @@ const Dashboard: React.FC = () => {
                 buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
               />
             </TabsContent>
-            
+
             <TabsContent value="my-assets" className="mt-16 md:mt-6 space-y-6">
               <Card>
                 <CardHeader>
@@ -324,7 +319,7 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="requests" className="mt-16 md:mt-6">
               <Card>
                 <CardHeader>
@@ -375,32 +370,6 @@ const Dashboard: React.FC = () => {
                                       <span>Firmar NDA</span>
                                     </Button>
                                   )}
-                                  
-                                  {request.status === 'information_shared' && request.sharedInfoLink && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex items-center gap-1"
-                                      asChild
-                                    >
-                                      <a href={request.sharedInfoLink} target="_blank" rel="noopener noreferrer">
-                                        <Eye className="h-3 w-3" />
-                                        <span>Ver Archivos</span>
-                                      </a>
-                                    </Button>
-                                  )}
-                                  
-                                  {(request.status === 'approved' || request.status === 'nda_received') && (
-                                    <span className="text-sm text-estate-steel">Esperando acción del administrador</span>
-                                  )}
-                                  
-                                  {request.status === 'rejected' && (
-                                    <span className="text-sm text-estate-error">Solicitud rechazada</span>
-                                  )}
-                                  
-                                  {request.status === 'pending' && (
-                                    <span className="text-sm text-estate-steel">En revisión</span>
-                                  )}
                                 </TableCell>
                               </TableRow>
                             );
@@ -416,6 +385,22 @@ const Dashboard: React.FC = () => {
             <TabsContent value="new-asset" className="mt-16 md:mt-6 space-y-6">
               <AssetForm onSubmit={handleAssetSubmit} />
             </TabsContent>
+
+            {/* Panel de Admin */}
+            {isAdmin && (
+              <TabsContent value="admin" className="mt-16 md:mt-6 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Gestión de Usuarios</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Aquí puedes agregar cualquier funcionalidad para el administrador, por ejemplo */}
+                    <Button size="sm" variant="outline">Gestionar usuarios</Button>
+                    <Button size="sm" variant="outline">Ver Logs de Actividad</Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>

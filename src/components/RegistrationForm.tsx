@@ -63,7 +63,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
             empresa: formData.company,
             su_rol: formData.role,
             mensaje: formData.message || null,
-            estado: 'pendiente',
+            estado: 0,
           },
         ]);
 
