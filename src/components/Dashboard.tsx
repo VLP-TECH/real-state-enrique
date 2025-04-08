@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/supabaseClient';
-import checkUserSession from '@/components/AuthManager';
+import { useNavigate } from 'react-router-dom';
 
 const mockUser: User = {
   id: 'ZX_2301',
@@ -182,16 +182,19 @@ const mockRequests: InformationRequest[] = [
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
-const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
-const [userAssets, setUserAssets] = useState<Asset[]>(mockAssets.filter(asset => asset.ownerId === mockUser.id));
-const [userRequests, setUserRequests] = useState<InformationRequest[]>(mockRequests);
-const [userProfile, setUserProfile] = useState<User | null>(null);
-const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
+  const [userAssets, setUserAssets] = useState<Asset[]>(mockAssets.filter(asset => asset.ownerId === mockUser.id));
+  const [userRequests, setUserRequests] = useState<InformationRequest[]>(mockRequests);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-// NUEVO: Estado para solicitudes desde Supabase
-const [solicitudes, setSolicitudes] = useState<any[]>([]);
-const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
+  // NUEVO: Estado para solicitudes desde Supabase
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
+
+  const navigate = useNavigate(); // Añade este hook
+  const [authChecked, setAuthChecked] = useState(false); // Nuevo estado para controlar la verificación
 
 useEffect(() => {
   const fetchProfile = async () => {
@@ -229,13 +232,41 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  const checkAuth = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (!user) {
+      // Si no hay usuario autenticado, redirigir al login
+      toast({
+        title: 'Acceso no autorizado',
+        description: 'Debes iniciar sesión para acceder al dashboard',
+        variant: 'destructive',
+      });
+      navigate('/');
+      return;
+    }
+    
+    setAuthChecked(true); // Marcar que la verificación se completó
+  };
+
+  checkAuth();
+  
+  // Suscribirse a cambios de autenticación
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      navigate('/');
+    }
+  });
+
+  return () => subscription.unsubscribe();
+}, [navigate, toast]);
+
+useEffect(() => {
   const fetchSolicitudes = async () => {
     if (isAdmin) {
-      console.log("Fetching solicitudes..."); // <-- Este debe aparecer en consola
       try {
         const { data, error } = await supabase.from('solicitudes').select('*');
         if (error) throw error;
-        console.log("Solicitudes recibidas:", data); // <-- Aquí deberías ver las solicitudes
         setSolicitudes(data || []);
       } catch (error) {
         console.error('Error al obtener solicitudes:', error);
@@ -272,8 +303,97 @@ const getAssetById = (assetId: string) => {
   return mockAssets.find(asset => asset.id === assetId) || null;
 };
 
-if (!userProfile) {
-  return <div>Loading...</div>;
+const mapRolLegible = (rol: string): string => {
+  const roles: Record<string, string> = {
+    buyer_mandatary: "Mandatario de Compra",
+    seller_mandatary: "Mandatario de Venta",
+    investor: "Inversor / Family Office",
+  };
+  return roles[rol] || rol;
+};
+
+const handleAprobar = async (id: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('solicitudes')
+      .update({ estado: true })
+      .eq('id', id);
+    
+    if (error) throw error;
+
+    setSolicitudes((prevSolicitudes) =>
+      prevSolicitudes.filter((solicitud) => solicitud.id !== id)
+    );
+
+    toast({
+      title: 'Solicitud aprobada',
+      description: 'La solicitud ha sido aprobada correctamente.',
+      variant: 'default',
+      className: 'bg-green-500',
+    });
+  } catch (error) {
+    console.error('Error al aprobar solicitud:', error);
+    toast({
+      title: 'Error',
+      description: 'Hubo un problema al aprobar la solicitud.',
+      variant: 'destructive',
+    });
+  }
+};
+
+const handleDenegar = async (id: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('solicitudes')
+      .update({ estado: false })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    setSolicitudes((prevSolicitudes) =>
+      prevSolicitudes.filter((solicitud) => solicitud.id !== id)
+    );
+
+    toast({
+      title: 'Solicitud denegada',
+      description: 'La solicitud ha sido marcada como eliminada.',
+      variant: 'destructive',
+    });
+  } catch (error) {
+    console.error('Error al denegar solicitud:', error);
+    toast({
+      title: 'Error',
+      description: 'Hubo un problema al denegar la solicitud.',
+      variant: 'destructive',
+    });
+  }
+};
+
+useEffect(() => {
+  const fetchSolicitudes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('solicitudes')
+        .select('*')
+        .is('estado', null);
+  
+      if (error) throw error;
+  
+      setSolicitudes(data);
+    } catch (error) {
+      console.error('Error al obtener solicitudes:', error);
+    }
+  };  
+
+  fetchSolicitudes();
+}, [isAdmin]);
+
+if (!authChecked) {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#E1D48A]"></div>
+    </div>
+  );
 }
 
   return (
@@ -299,7 +419,6 @@ if (!userProfile) {
                 Subir Activo
               </TabsTrigger>
 
-              {/* Este TabsTrigger es para los Admins */}
               {isAdmin && (
                 <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
                   Panel de Admin
@@ -422,21 +541,50 @@ if (!userProfile) {
                     ) : solicitudes.length === 0 ? (
                       <p>No hay solicitudes disponibles.</p>
                     ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Solicitudes de Membresía:</h3>
-                        <ul className="space-y-4">
-                          {solicitudes.map((solicitud) => (
-                            <li key={solicitud.id} className="p-4 border rounded-md">
-                              <p><strong>Nombre:</strong> {solicitud.nombre_completo}</p>
-                              <p><strong>Email:</strong> {solicitud.correo_electronico}</p>
-                              <p><strong>Teléfono:</strong> {solicitud.numero_telefono}</p>
-                              <p><strong>Empresa:</strong> {solicitud.empresa}</p>
-                              <p><strong>Rol:</strong> {solicitud.su_rol}</p>
-                              <p><strong>Mensaje:</strong> {solicitud.mensaje || 'No hay mensaje'}</p>
-                              <p><strong>Estado:</strong> {solicitud.estado === 0 ? 'Pendiente' : 'Aprobado'}</p>
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Teléfono</TableHead>
+                              <TableHead>Empresa</TableHead>
+                              <TableHead>Rol</TableHead>
+                              <TableHead>Mensaje</TableHead>
+                              <TableHead className="text-left">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {solicitudes.map((solicitud) => (
+                              <TableRow key={solicitud.id}>
+                                <TableCell>{solicitud.nombre_completo}</TableCell>
+                                <TableCell>{solicitud.correo_electronico}</TableCell>
+                                <TableCell>{solicitud.numero_telefono}</TableCell>
+                                <TableCell>{solicitud.empresa}</TableCell>
+                                <TableCell>{mapRolLegible(solicitud.su_rol)}</TableCell>
+                                <TableCell>{solicitud.mensaje || 'No hay mensaje'}</TableCell>
+                                <TableCell className="text-left">
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="default"
+                                      onClick={() => handleAprobar(solicitud.id)}
+                                    >
+                                      Aprobar
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="destructive"
+                                      onClick={() => handleDenegar(solicitud.id)}
+                                    >
+                                      Denegar
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
                   </CardContent>

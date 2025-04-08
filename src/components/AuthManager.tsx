@@ -7,21 +7,42 @@ const AuthManager = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Verifica si el usuario está autenticado
+  // Verificación mejorada
   useEffect(() => {
     const checkUserSession = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setIsAuthenticated(true); // El usuario está autenticado
-        navigate('/dashboard'); // Si está autenticado, redirigir al Dashboard
-      } else {
-        setIsAuthenticated(false); // El usuario no está autenticado
-        navigate('/'); // Redirigir a la página principal si no está autenticado
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error checking session:', error);
       }
+      
+      // Redirige basado en la ruta actual
+      const currentPath = window.location.pathname;
+      
+      if (user) {
+        if (currentPath === '/') {
+          navigate('/dashboard');
+        }
+      } else {
+        if (currentPath === '/dashboard') {
+          navigate('/');
+        }
+      }
+      
+      setAuthChecked(true); // Marca que la verificación se completó
     };
 
+    // Suscribirse a cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkUserSession();
+    });
+
+    // Verificación inicial
     checkUserSession();
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Función para iniciar sesión
@@ -70,7 +91,8 @@ const AuthManager = () => {
     isAuthenticated,
     handleLogin,
     handleLogout,
-    checkAuth
+    checkAuth,
+    authChecked
   };
 };
 
