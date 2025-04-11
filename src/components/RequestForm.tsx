@@ -61,7 +61,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
             </div>
             <div className="flex justify-between mt-1">
               <span className="text-estate-steel">Ubicación:</span>
-              <span className="font-medium">{asset.location.city}, {asset.location.country}</span>
+              <span className="font-medium">{asset.city}, {asset.country}</span>
             </div>
           </div>
           

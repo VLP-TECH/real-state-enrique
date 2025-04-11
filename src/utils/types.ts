@@ -31,6 +31,7 @@ export interface User {
   // Statistics
   assetsCount?: number;
   requestsCount?: number;
+  admin?: boolean;
 }
 
 // Asset interface
@@ -38,18 +39,14 @@ export interface Asset {
   id: string;
   purpose: AssetPurpose;
   type: AssetType;
-  location: {
-    country: string;
-    city: string;
-    area?: string;
-  };
+  country: string;
+  city: string;
+  area?: string;
   expectedReturn?: number; // As percentage
-  price: {
-    amount: number;
-    currency: string;
-  };
+  priceAmount: number;
+  priceCurrency: string;
   description?: string;
-  createdAt: string;
+  creado: string;
   ownerId: string; // References User.id but never displayed
   files?: {
     type: 'pdf' | 'image' | 'video';
@@ -58,13 +55,26 @@ export interface Asset {
   }[];
 }
 
+export interface AssetFormData {
+  purpose: AssetPurpose;
+  type: AssetType;
+  country: string;
+  city: string;
+  area?: string;
+  expectedReturn?: number;
+  priceAmount: number;
+  priceCurrency: string;
+  description: string;
+  files?: File[];
+}
+
 // Request interface
 export interface InformationRequest {
   id: string;
   assetId: string;
   requesterId: string;
   status: RequestStatus;
-  createdAt: string;
+  creado: string;
   updatedAt: string;
   notes?: string;
   ndaLink?: string;

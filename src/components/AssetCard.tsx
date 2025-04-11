@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Asset } from '@/utils/types';
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar, TrendingUp, Info } from 'lucide-react';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatDate, safeDateParser } from '@/utils/formatters';
 
 interface AssetCardProps {
   asset: Asset;
@@ -12,13 +12,10 @@ interface AssetCardProps {
 }
 
 const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
-  const formattedPrice = formatCurrency(asset.price.amount, asset.price.currency);
-  const formattedDate = new Date(asset.createdAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-  
+  console.log("Asset:", asset);
+  const formattedPrice = formatCurrency(asset.priceAmount, asset.priceCurrency);
+  const formattedDate = safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida';
+
   const getTypeLabel = () => {
     const typeTranslations: Record<string, string> = {
       'residential': 'Residencial',
@@ -75,11 +72,11 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
             <div className="flex items-center gap-2 text-sm text-estate-steel">
               <MapPin className="h-4 w-4" />
               <span>
-                {asset.location.city}, {asset.location.country}
-                {asset.location.area && ` - ${asset.location.area}`}
+                {asset.city}, {asset.country}
+                {asset.area && ` - ${asset.area}`}
               </span>
             </div>
-            
+
             <div className="flex items-center gap-2 text-sm text-estate-steel">
               <Calendar className="h-4 w-4" />
               <span>Publicado el {formattedDate}</span>

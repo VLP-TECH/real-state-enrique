@@ -1,51 +1,75 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 const AuthManager = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Verificación mejorada
   useEffect(() => {
     const checkUserSession = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
-      
+
       if (error) {
         console.error('Error checking session:', error);
       }
-      
-      // Redirige basado en la ruta actual
-      const currentPath = window.location.pathname;
-      
+
+      const currentPath = location.pathname;
+
       if (user) {
-        if (currentPath === '/') {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('admin')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           navigate('/dashboard');
+          return;
         }
-      } else {
-        if (currentPath === '/dashboard') {
-          navigate('/');
+
+        const isAdmin = profile?.admin === true;
+        let expectedPath = '/';
+        let description = 'Debes iniciar sesión para acceder a esta página.';
+
+        if (user) {
+          if (isAdmin && currentPath === '/dashboard') {
+            expectedPath = '/dashboard/admin';
+            description = 'Acceso no autorizado. Redirigiendo...';
+            toast({
+              title: 'Redirección',
+              description: description,
+            });
+            navigate(expectedPath, { replace: true });
+          } else if (!isAdmin && currentPath !== '/dashboard') {
+            expectedPath = '/dashboard';
+             description = 'Acceso no autorizado. Redirigiendo...';
+            toast({
+              title: 'Redirección',
+              description: description,
+            });
+            navigate(expectedPath, { replace: true });
+          }
         }
       }
-      
-      setAuthChecked(true); // Marca que la verificación se completó
+
+      setAuthChecked(true);
     };
 
-    // Suscribirse a cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       checkUserSession();
     });
 
-    // Verificación inicial
     checkUserSession();
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location, toast]);
 
-  // Función para iniciar sesión
   const handleLogin = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -67,10 +91,22 @@ const AuthManager = () => {
     });
 
     setIsAuthenticated(true);
-    navigate('/dashboard');
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('admin')
+      .eq('user_id', data.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      navigate('/dashboard');
+      return;
+    }
+
+    const isAdmin = profile?.admin === true;
+    navigate(isAdmin ? '/dashboard/admin' : '/dashboard');
   };
 
-  // Función para cerrar sesión
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
@@ -78,10 +114,9 @@ const AuthManager = () => {
       description: 'Has cerrado sesión correctamente.',
     });
     setIsAuthenticated(false);
-    navigate('/'); // Redirigir a la página principal
+    navigate('/');
   };
 
-  // Función para verificar si el usuario está autenticado
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user !== null;
