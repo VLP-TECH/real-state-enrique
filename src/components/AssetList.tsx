@@ -8,7 +8,7 @@ import { formatCurrency, formatDate, safeDateParser } from '@/utils/formatters';
 interface AssetListProps {
     assets: Asset[];
     location?: string;
-    profitability?: number | undefined;
+    profitability?: string;
     assetType?: string;
     price?: string | undefined;
     onRequestInfo?: (assetId: string) => void;
@@ -17,37 +17,33 @@ interface AssetListProps {
 
 const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, assetType, price, onRequestInfo, buttonStyle = "" }) => {
     const filteredAssets = assets.filter(asset => {
-        if (location && !asset.city.toLowerCase().includes(location.toLowerCase()) && !asset.country.toLowerCase().includes(location.toLowerCase())) {
+        if (location && !asset.city.toLowerCase().includes(location.toLowerCase()) && 
+            !asset.country.toLowerCase().includes(location.toLowerCase())) {
             return false;
         }
-
-        if (profitability !== undefined) {
-            if (asset.expectedReturn < profitability) {
+    
+        if (profitability) {
+            const [minStr, maxStr] = profitability.split('-');
+            const min = parseFloat(minStr);
+            const max = parseFloat(maxStr);
+            if (asset.expectedReturn < min || asset.expectedReturn > max) {
                 return false;
             }
         }
-
+    
         if (assetType && assetType !== "" && asset.type !== assetType) {
             return false;
         }
-
+    
         if (price) {
-            try {
-                const [minPrice, maxPrice] = price.split("-").map(Number);
-
-                if (minPrice !== undefined && asset.priceAmount < minPrice) {
-                    return false;
-                }
-
-                if (maxPrice !== undefined && asset.priceAmount > maxPrice) {
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error parsing price range:", error);
-                return true;
+            const [minStr, maxStr] = price.split('-');
+            const min = parseFloat(minStr);
+            const max = parseFloat(maxStr);
+            if (asset.priceAmount < min || asset.priceAmount > max) {
+                return false;
             }
         }
-
+    
         return true;
     });
 

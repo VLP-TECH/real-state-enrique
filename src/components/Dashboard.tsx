@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserProfile from './UserProfile';
@@ -6,12 +5,12 @@ import AssetForm from './AssetForm';
 import AssetList from './AssetList';
 import RequestForm from './RequestForm';
 import AssetCard from './AssetCard';
-import { Asset, AssetFormData, InformationRequest, User } from '@/utils/types';
+import { Asset, InformationRequest, User } from '@/utils/types';
 import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -30,16 +29,26 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const [locationFilter, setLocationFilter] = useState('');
-  const [profitabilityFilter, setProfitabilityFilter] = useState<number | undefined>(undefined);
+  const [profitabilityRangeFilter, setProfitabilityRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
   const [assetTypeFilter, setAssetTypeFilter] = useState('');
-  const [priceFilter, setPriceFilter] = useState<number | undefined>(undefined);
+  const [priceRangeFilter, setPriceRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
 
   // Filtrar los activos usando tanto la ciudad como el país
   const filteredAssets = allAssets.filter((asset) => {
     const lowercasedFilter = locationFilter.toLowerCase();
+    const priceMatch = priceRangeFilter.min === undefined || 
+                     (asset.priceAmount >= (priceRangeFilter.min || 0) && 
+                      asset.priceAmount <= (priceRangeFilter.max || Infinity));
+    
+    const profitabilityMatch = profitabilityRangeFilter.min === undefined || 
+                             (asset.expectedReturn >= (profitabilityRangeFilter.min || 0) && 
+                              asset.expectedReturn <= (profitabilityRangeFilter.max || Infinity));
+    
     return (
       (asset.city?.toLowerCase().includes(lowercasedFilter) || 
-      asset.country?.toLowerCase().includes(lowercasedFilter))
+       asset.country?.toLowerCase().includes(lowercasedFilter)) &&
+      priceMatch &&
+      profitabilityMatch
     );
   });
 
@@ -201,13 +210,31 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div>
                     <label htmlFor="profitability">Rentabilidad:</label>
-                    <input
-                      type="number"
+                    <select
                       id="profitability"
                       className="border rounded px-2 py-1 w-full"
-                      value={profitabilityFilter || ''}
-                      onChange={(e) => setProfitabilityFilter(e.target.value === '' ? undefined : Number(e.target.value))}
-                    />
+                      value={
+                        profitabilityRangeFilter.min === undefined && profitabilityRangeFilter.max === undefined 
+                          ? 'all' 
+                          : `${profitabilityRangeFilter.min || 0}-${profitabilityRangeFilter.max || 100}`
+                      }
+                      onChange={(e) => {
+                        if (e.target.value === 'all') {
+                          setProfitabilityRangeFilter({min: undefined, max: undefined});
+                        } else {
+                          const [min, max] = e.target.value.split('-').map(Number);
+                          setProfitabilityRangeFilter({min, max});
+                        }
+                      }}
+                    >
+                      <option value="all">Todos</option>
+                      <option value="0-5">0% - 5%</option>
+                      <option value="5-10">5% - 10%</option>
+                      <option value="10-15">10% - 15%</option>
+                      <option value="15-20">15% - 20%</option>
+                      <option value="20-25">20% - 25%</option>
+                      <option value="25-100">Más de 25%</option>
+                    </select>
                   </div>
                   <div>
                     <label htmlFor="assetType">Tipo de Activo:</label>
@@ -230,21 +257,40 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div>
                     <label htmlFor="price">Precio:</label>
-                    <input
-                      type="number"
+                    <select
                       id="price"
                       className="border rounded px-2 py-1 w-full"
-                      value={priceFilter || ''}
-                      onChange={(e) => setPriceFilter(e.target.value === '' ? undefined : Number(e.target.value))}
-                    />
+                      value={
+                        priceRangeFilter.min === undefined && priceRangeFilter.max === undefined 
+                          ? 'all' 
+                          : `${priceRangeFilter.min || 0}-${priceRangeFilter.max || 99999999}`
+                      }
+                      onChange={(e) => {
+                        if (e.target.value === 'all') {
+                          setPriceRangeFilter({min: undefined, max: undefined});
+                        } else {
+                          const [min, max] = e.target.value.split('-').map(Number);
+                          setPriceRangeFilter({min, max});
+                        }
+                      }}
+                    >
+                      <option value="all">Todos</option>
+                      <option value="0-100000">$0 - $100,000</option>
+                      <option value="100000-500000">$100,000 - $500,000</option>
+                      <option value="500000-1000000">$500,000 - $1,000,000</option>
+                      <option value="1000000-3000000">$1,000,000 - $3,000,000</option>
+                      <option value="3000000-5000000">$3,000,000 - $5,000,000</option>
+                      <option value="5000000-10000000">$5,000,000 - $10,000,000</option>
+                      <option value="10000000-99999999">Más de $10,000,000</option>
+                    </select>
                   </div>
                 </div>
                 <AssetList
                   assets={mockAssets}
                   location={locationFilter}
-                  profitability={profitabilityFilter}
+                  profitability={profitabilityRangeFilter.min !== undefined ? `${profitabilityRangeFilter.min}-${profitabilityRangeFilter.max}` : ''}
                   assetType={assetTypeFilter}
-                  price={priceFilter?.toString() ?? ''}
+                  price={priceRangeFilter.min !== undefined ? `${priceRangeFilter.min}-${priceRangeFilter.max}` : ''}
                   onRequestInfo={(assetId) => handleRequestInfo(getAssetById(assetId))}
                   buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
                 />
@@ -354,6 +400,5 @@ const Dashboard: React.FC = () => {
 
   return null;
 };
-
 
 export default Dashboard;
