@@ -72,8 +72,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
     // Basic validation
     if (!formData.country || !formData.city || !formData.priceAmount) {
       toast({
-        title: "Validation Error",
-        description: "Please fill out all required fields.",
+        title: "Error de Validación",
+        description: "Por favor, completa todos los campos obligatorios.",
         variant: "destructive",
       });
       return;
@@ -92,10 +92,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
       onSubmit(completeFormData);
       setIsSubmitting(false);
       toast({
-        title: "Asset Submitted",
-        description: "Your asset has been sent for review.",
+        title: "Activo Enviado",
+        description: "Tu activo ha sido enviado para revisión.",
       });
-      
+
       // Reset form
       setFormData({
         purpose: 'sale' as AssetPurpose,
@@ -119,9 +119,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
   
   const getAssetPurposeLabel = (purpose: AssetPurpose): string => {
     switch (purpose) {
-      case 'sale': return 'For Sale';
-      case 'purchase': return 'For Purchase';
-      case 'need': return 'Need';
+      case 'sale': return 'En Venta';
+      case 'purchase': return 'Para Compra';
+      case 'need': return 'Necesidad';
       default: return purpose;
     }
   };
@@ -129,20 +129,20 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Submit New Asset</CardTitle>
+        <CardTitle>Subir Activo</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="purpose">Asset Purpose</Label>
-                <Select 
-                  value={formData.purpose} 
+                <Label htmlFor="purpose">Propósito del Activo</Label>
+                <Select
+                  value={formData.purpose}
                   onValueChange={(value) => handleSelectChange('purpose', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select purpose" />
+                    <SelectValue placeholder="Seleccionar propósito" />
                   </SelectTrigger>
                   <SelectContent>
                     {assetPurposes.map(purpose => (
@@ -155,13 +155,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="type">Asset Type</Label>
-                <Select 
-                  value={formData.type} 
+                <Label htmlFor="type">Tipo de Activo</Label>
+                <Select
+                  value={formData.type}
                   onValueChange={(value) => handleSelectChange('type', value as AssetType)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     {assetTypes.map(type => (
@@ -174,13 +174,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="expectedReturn">Expected Return (%)</Label>
+                <Label htmlFor="expectedReturn">Retorno Esperado (%)</Label>
                 <Input
                   id="expectedReturn"
                   name="expectedReturn"
                   type="number"
                   step="0.1"
-                  placeholder="e.g. 7.5"
+                  placeholder="ej. 7.5"
                   value={formData.expectedReturn || ''}
                   onChange={handleChange}
                 />
@@ -189,11 +189,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="country">Country <span className="text-estate-error">*</span></Label>
+                <Label htmlFor="country">País <span className="text-estate-error">*</span></Label>
                 <Input
                   id="country"
                   name="country"
-                  placeholder="Country"
+                  placeholder="País"
                   value={formData.country}
                   onChange={handleChange}
                   required
@@ -201,11 +201,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="city">City <span className="text-estate-error">*</span></Label>
+                <Label htmlFor="city">Ciudad <span className="text-estate-error">*</span></Label>
                 <Input
                   id="city"
                   name="city"
-                  placeholder="City"
+                  placeholder="Ciudad"
                   value={formData.city}
                   onChange={handleChange}
                   required
@@ -213,11 +213,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="area">Area/Zone (Optional)</Label>
+                <Label htmlFor="area">Área/Zona (Opcional)</Label>
                 <Input
                   id="area"
                   name="area"
-                  placeholder="Area or zone"
+                  placeholder="Área o zona"
                   value={formData.area}
                   onChange={handleChange}
                 />
@@ -226,12 +226,12 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="priceAmount">Price Amount <span className="text-estate-error">*</span></Label>
+                <Label htmlFor="priceAmount">Monto del Precio <span className="text-estate-error">*</span></Label>
                 <Input
                   id="priceAmount"
                   name="priceAmount"
                   type="number"
-                  placeholder="Amount"
+                  placeholder="Monto"
                   value={formData.priceAmount || ''}
                   onChange={handleChange}
                   required
@@ -239,13 +239,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="priceCurrency">Currency</Label>
-                <Select 
-                  value={formData.priceCurrency} 
+                <Label htmlFor="priceCurrency">Moneda</Label>
+                <Select
+                  value={formData.priceCurrency}
                   onValueChange={(value) => handleSelectChange('priceCurrency', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select currency" />
+                    <SelectValue placeholder="Seleccionar moneda" />
                   </SelectTrigger>
                   <SelectContent>
                     {currencies.map(currency => (
@@ -259,11 +259,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 name="description"
-                placeholder="Describe the asset..."
+                placeholder="Describe el activo..."
                 rows={5}
                 value={formData.description}
                 onChange={handleChange}
@@ -271,16 +271,16 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
             </div>
             
             <div className="space-y-3">
-              <Label>Documents & Media</Label>
+              <Label>Documentos y Multimedia</Label>
               
               <div className="border-2 border-dashed border-estate-lightgrey rounded-lg p-6 text-center">
                 <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center">
                   <Upload className="h-10 w-10 text-estate-steel mb-2" />
-                  <p className="text-estate-slate font-medium">Click to upload or drag and drop</p>
-                  <p className="text-sm text-estate-steel">PDF, images, or videos (max 10MB each)</p>
-                  <Input 
-                    id="file-upload" 
-                    type="file" 
+                  <p className="text-estate-slate font-medium">Haz clic para subir o arrastra y suelta</p>
+                  <p className="text-sm text-estate-steel">PDF, imágenes o vídeos (máx. 10MB cada uno)</p>
+                  <Input
+                    id="file-upload"
+                    type="file"
                     multiple 
                     className="hidden" 
                     onChange={handleFileChange} 
@@ -291,10 +291,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               
               {uploadedFiles.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-sm font-medium text-estate-slate mb-2">Uploaded files:</p>
+                  <p className="text-sm font-medium text-estate-slate mb-2">Archivos subidos:</p>
                   <div className="space-y-2">
                     {uploadedFiles.map((file, index) => (
-                      <div 
+                      <div
                         key={`${file.name}-${index}`} 
                         className="flex items-center justify-between bg-estate-offwhite p-2 rounded"
                       >
@@ -320,10 +320,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
               )}
             </div>
           </div>
-          
+
           <CardFooter className="flex justify-end px-0 pt-4">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit Asset'}
+              {isSubmitting ? 'Enviando...' : 'Enviar Activo'}
             </Button>
           </CardFooter>
         </form>

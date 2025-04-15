@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserProfile from './UserProfile';
 import AssetForm from './AssetForm';
-import AssetList from './AssetList';
 import RequestForm from './RequestForm';
 import AssetCard from './AssetCard';
+import AssetList from './AssetList';
 import { Asset, InformationRequest, User } from '@/utils/types';
 import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from "@/components/ui/button";
-import { FileText } from 'lucide-react';
+import { FileText, Info, List, LayoutGrid } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { safeDateParser } from '@/utils/formatters';
+import { formatCurrency, safeDateParser } from '@/utils/formatters';
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
@@ -27,6 +27,7 @@ const Dashboard: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
   const [locationFilter, setLocationFilter] = useState('');
   const [profitabilityRangeFilter, setProfitabilityRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
@@ -43,12 +44,15 @@ const Dashboard: React.FC = () => {
     const profitabilityMatch = profitabilityRangeFilter.min === undefined || 
                              (asset.expectedReturn >= (profitabilityRangeFilter.min || 0) && 
                               asset.expectedReturn <= (profitabilityRangeFilter.max || Infinity));
-    
+                              
+    const assetTypeMatch = assetTypeFilter === '' || asset.type === assetTypeFilter;
+
     return (
-      (asset.city?.toLowerCase().includes(lowercasedFilter) || 
+      (asset.city?.toLowerCase().includes(lowercasedFilter) ||
        asset.country?.toLowerCase().includes(lowercasedFilter)) &&
       priceMatch &&
-      profitabilityMatch
+      profitabilityMatch &&
+      assetTypeMatch // Add the asset type check here
     );
   });
 
@@ -174,27 +178,33 @@ const Dashboard: React.FC = () => {
             {userProfile && <UserProfile user={userProfile} />}
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 ">
             <Tabs defaultValue="discover" className="w-full">
-              <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex border-[#E1D48A]">
-                <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                  Descubrir Activos
-                </TabsTrigger>
-                <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                  Mis Activos
-                </TabsTrigger>
-                <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                  Mis Solicitudes
-                </TabsTrigger>
-                <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                  Subir Activo
-                </TabsTrigger>
-                {isAdmin && (
-                  <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                    Panel de Admin
+              <div className="flex justify-between items-center">
+                <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex border-[#E1D48A]">
+                  <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                    Descubrir Activos
                   </TabsTrigger>
-                )}
-              </TabsList>
+                  <TabsTrigger value="my-assets" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                    Mis Activos
+                  </TabsTrigger>
+                  <TabsTrigger value="requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                    Mis Solicitudes
+                  </TabsTrigger>
+                  <TabsTrigger value="new-asset" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                    Subir Activo
+                  </TabsTrigger>
+                </TabsList>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setViewMode(prev => prev === 'card' ? 'list' : 'card')}
+                  >
+                    {viewMode === 'card' ? <List className="h-4 w-4 mr-2" /> : <LayoutGrid className="h-4 w-4 mr-2" />}
+                    {viewMode === 'card' ? 'Vista Lista' : 'Vista Tarjeta'}
+                  </Button>
+              </div>
+
 
               <TabsContent value="discover" className="mt-16 md:mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -203,7 +213,7 @@ const Dashboard: React.FC = () => {
                     <input
                       type="text"
                       id="location"
-                      className="border rounded px-2 py-1 w-full"
+                      className="border rounded px-2 py-1 w-full h-9"
                       value={locationFilter}
                       onChange={(e) => setLocationFilter(e.target.value)}
                     />
@@ -212,9 +222,9 @@ const Dashboard: React.FC = () => {
                     <label htmlFor="profitability">Rentabilidad:</label>
                     <select
                       id="profitability"
-                      className="border rounded px-2 py-1 w-full"
+                      className="border rounded px-2 py-1 w-full h-9"
                       value={
-                        profitabilityRangeFilter.min === undefined && profitabilityRangeFilter.max === undefined 
+                        profitabilityRangeFilter.min === undefined && profitabilityRangeFilter.max === undefined
                           ? 'all' 
                           : `${profitabilityRangeFilter.min || 0}-${profitabilityRangeFilter.max || 100}`
                       }
@@ -240,7 +250,7 @@ const Dashboard: React.FC = () => {
                     <label htmlFor="assetType">Tipo de Activo:</label>
                     <select
                       id="assetType"
-                      className="border rounded px-2 py-1 w-full"
+                      className="border rounded px-2 py-1 w-full h-9"
                       value={assetTypeFilter}
                       onChange={(e) => setAssetTypeFilter(e.target.value)}
                     >
@@ -259,9 +269,9 @@ const Dashboard: React.FC = () => {
                     <label htmlFor="price">Precio:</label>
                     <select
                       id="price"
-                      className="border rounded px-2 py-1 w-full"
+                      className="border rounded px-2 py-1 w-full h-9"
                       value={
-                        priceRangeFilter.min === undefined && priceRangeFilter.max === undefined 
+                        priceRangeFilter.min === undefined && priceRangeFilter.max === undefined
                           ? 'all' 
                           : `${priceRangeFilter.min || 0}-${priceRangeFilter.max || 99999999}`
                       }
@@ -285,15 +295,68 @@ const Dashboard: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                <AssetList
-                  assets={mockAssets}
-                  location={locationFilter}
-                  profitability={profitabilityRangeFilter.min !== undefined ? `${profitabilityRangeFilter.min}-${profitabilityRangeFilter.max}` : ''}
-                  assetType={assetTypeFilter}
-                  price={priceRangeFilter.min !== undefined ? `${priceRangeFilter.min}-${priceRangeFilter.max}` : ''}
-                  onRequestInfo={(assetId) => handleRequestInfo(getAssetById(assetId))}
-                  buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
-                />
+
+                {viewMode === 'card' ? (
+                  <AssetList
+                    assets={mockAssets}
+                    location={locationFilter}
+                    profitability={profitabilityRangeFilter.min !== undefined ? `${profitabilityRangeFilter.min}-${profitabilityRangeFilter.max}` : ''}
+                    assetType={assetTypeFilter}
+                    price={priceRangeFilter.min !== undefined ? `${priceRangeFilter.min}-${priceRangeFilter.max}` : ''}
+                    onRequestInfo={(assetId) => handleRequestInfo(getAssetById(assetId))}
+                    buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>ID</TableHead>
+                              <TableHead>Tipo</TableHead>
+                              <TableHead>Localización</TableHead>
+                              <TableHead>Precio</TableHead>
+                              <TableHead>Retorno</TableHead>
+                              <TableHead className="text-right">Acción</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {mockAssets.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8 text-estate-steel">
+                                  No se encontraron activos con los filtros seleccionados.
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              mockAssets.map(asset => (
+                                <TableRow key={asset.id}>
+                                  <TableCell className="font-medium text-xs">{asset.id}</TableCell>
+                                  <TableCell className="capitalize">{asset.type}</TableCell>
+                                  <TableCell>{asset.city}, {asset.country}</TableCell>
+                                  <TableCell>{formatCurrency(asset.priceAmount, asset.priceCurrency)}</TableCell>
+                                  <TableCell>{asset.expectedReturn ? `${asset.expectedReturn}%` : '-'}</TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleRequestInfo(asset)}
+                                      className="flex items-center gap-1 bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
+                                    >
+                                      <Info className="h-3 w-3" />
+                                      <span>Solicitar</span>
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <RequestForm
                   asset={selectedAsset}
                   open={isRequestFormOpen}
