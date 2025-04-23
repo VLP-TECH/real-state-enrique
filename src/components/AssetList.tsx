@@ -3,19 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { ChevronRight, Info } from "lucide-react";
 import { Asset } from '@/utils/types';
-import { formatCurrency, formatDate, safeDateParser } from '@/utils/formatters';
+import { formatCurrency, safeDateParser } from '@/utils/formatters';
 
 interface AssetListProps {
     assets: Asset[];
     location?: string;
     profitability?: string;
-    assetType?: string;
+    
     price?: string | undefined;
     onRequestInfo?: (assetId: string) => void;
     buttonStyle?: string;
 }
 
-const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, assetType, price, onRequestInfo, buttonStyle = "" }) => {
+const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, price, onRequestInfo, buttonStyle = "" }) => { 
     const filteredAssets = assets.filter(asset => {
         if (location && !asset.city.toLowerCase().includes(location.toLowerCase()) && 
             !asset.country.toLowerCase().includes(location.toLowerCase())) {
@@ -29,10 +29,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, 
             if (asset.expectedReturn < min || asset.expectedReturn > max) {
                 return false;
             }
-        }
-    
-        if (assetType && assetType !== "" && asset.type !== assetType) {
-            return false;
         }
     
         if (price) {
@@ -53,12 +49,16 @@ const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, 
                 <Card key={asset.id} className="overflow-hidden card-hover">
                     <CardHeader className="bg-estate-navy text-white px-4 py-3">
                         <div className="flex justify-between items-center">
-                            <p className="text-sm font-medium flex items-center gap-1">
-                                <span className="capitalize">{asset.type}</span>
-                                <span className="text-estate-lightgrey">•</span>
-                                <span className="capitalize">{asset.purpose}</span>
+                            <p className="text-sm font-medium flex items-center gap-1 truncate">
+                                <span className="capitalize">{asset.category || 'Categoría no especificada'}</span>
+                                {asset.subcategory1 && <span className="text-estate-lightgrey">›</span>}
+                                {asset.subcategory1 && <span className="capitalize">{asset.subcategory1}</span>}
+                                {asset.subcategory2 && <span className="text-estate-lightgrey">›</span>}
+                                {asset.subcategory2 && <span className="capitalize">{asset.subcategory2}</span>}
+                                <span className="text-estate-lightgrey ml-1">•</span>
+                                <span className="capitalize ml-1">{asset.purpose}</span>
                             </p>
-                            <p className="text-estate-highlight text-xs font-semibold bg-estate-slate/50 px-2 py-1 rounded">
+                            <p className="text-estate-highlight text-xs font-semibold bg-estate-slate/50 px-2 py-1 rounded shrink-0 ml-2">
                                 {asset.id}
                             </p>
                         </div>

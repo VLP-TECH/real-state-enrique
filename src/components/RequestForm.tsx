@@ -1,7 +1,7 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from '@/supabaseClient'; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Asset } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
@@ -10,33 +10,112 @@ interface RequestFormProps {
   asset: Asset | null;
   open: boolean;
   onClose: () => void;
-  onSubmit: (assetId: string, notes: string) => void;
+  onSuccess: () => void; // Changed prop name from onSubmit
   buttonStyle?: string;
 }
 
-const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmit, buttonStyle = "" }) => {
+const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSuccess, buttonStyle = "" }) => { // Changed prop name
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null); 
   const { toast } = useToast();
+
   
-  const handleSubmit = () => {
-    if (!asset) return;
-    
+  useEffect(() => {
+    if (open) {
+      const fetchUser = async () => {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Error fetching user:", error);
+          toast({
+            title: "Error de Autenticación",
+            description: "No se pudo obtener la información del usuario.",
+            variant: "destructive",
+          });
+          setUserId(null);
+        } else if (user) {
+          setUserId(user.id);
+        } else {
+          setUserId(null); 
+          toast({
+            title: "No Autenticado",
+            description: "Debes iniciar sesión para solicitar información.",
+            variant: "destructive",
+          });
+          onClose(); 
+        }
+      };
+      fetchUser();
+    }
+  }, [open, toast, onClose]);
+
+  const handleSubmit = async () => { 
+    if (!asset || !userId) {
+      toast({
+        title: "Error",
+        description: "Falta información del activo o del usuario. Intenta de nuevo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      onSubmit(asset.id, notes);
+
+    const requestData = {
+      activo_id: asset.id,
+      user_id: userId,
+      mensaje: notes || null, 
+    };
+
+    try {
+      const { error } = await supabase
+        .from('infoactivo') 
+        .insert([requestData]);
+
+      if (error) {
+        throw error;
+      }
+
+      onSuccess(); // Call the new prop
+
       setIsSubmitting(false);
       setNotes('');
       toast({
         title: "Solicitud enviada",
-        description: "Su solicitud de información ha sido enviada al administrador para su revisión.",
+        description: "Su solicitud de información ha sido registrada correctamente.",
       });
       onClose();
-    }, 1000);
+
+    } catch (error: any) {
+      console.error('Error inserting request:', error);
+
+      let errorMessage = "Ocurrió un error desconocido al registrar la solicitud.";
+      if (error && error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
+      if (error && error.details) {
+         errorMessage += ` Detalles: ${error.details}`;
+      }
+      if (error && error.hint) {
+         errorMessage += ` Pista: ${error.hint}`;
+      }
+
+      if (error && error.code === 'PGRST116' || (error.message && error.message.includes('404'))) {
+         errorMessage += " (Sugerencia: Verifica las políticas de seguridad RLS en Supabase para la tabla 'infoActivo'. Es posible que los usuarios autenticados no tengan permiso para insertar.)";
+      }
+
+      toast({
+        title: "Error al Enviar Solicitud",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   };
-  
+
   if (!asset) return null;
   
   return (
@@ -55,10 +134,24 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSubmi
               <span className="text-estate-steel">ID del Activo:</span>
               <span className="font-medium">{asset.id}</span>
             </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-estate-steel">Tipo:</span>
-              <span className="font-medium capitalize">{asset.type}</span>
-            </div>
+            {asset.category && (
+              <div className="flex justify-between mt-1">
+                <span className="text-estate-steel">Categoría:</span>
+                <span className="font-medium capitalize text-right">{asset.category}</span>
+              </div>
+            )}
+            {asset.subcategory1 && (
+              <div className="flex justify-between mt-1">
+                <span className="text-estate-steel">Subcategoría 1:</span>
+                <span className="font-medium capitalize text-right">{asset.subcategory1}</span>
+              </div>
+            )}
+            {asset.subcategory2 && (
+              <div className="flex justify-between mt-1">
+                <span className="text-estate-steel">Subcategoría 2:</span>
+                <span className="font-medium capitalize text-right">{asset.subcategory2}</span>
+              </div>
+            )}
             <div className="flex justify-between mt-1">
               <span className="text-estate-steel">Ubicación:</span>
               <span className="font-medium">{asset.city}, {asset.country}</span>

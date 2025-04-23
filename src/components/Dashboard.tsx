@@ -31,28 +31,35 @@ const Dashboard: React.FC = () => {
 
   const [locationFilter, setLocationFilter] = useState('');
   const [profitabilityRangeFilter, setProfitabilityRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
-  const [assetTypeFilter, setAssetTypeFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [priceRangeFilter, setPriceRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
 
-  // Filtrar los activos usando tanto la ciudad como el país
+  const mainCategories = [
+    "Edificio Residencial", "Edificio Terciario", "Edificio Industrial",
+    "Edificio Sociosanitario", "Edificio Turístico", "Activo Singular",
+    "Vivienda", "Local Comercial", "Oficina", "Activo Logístico",
+    "Plaza de Garaje", "Trastero", "Solar Urbano", "Suelo Urbanizable",
+    "Suelo Rústico", "Solar con Proyecto", "Suelo Industrial"
+  ];
+
   const filteredAssets = allAssets.filter((asset) => {
     const lowercasedFilter = locationFilter.toLowerCase();
-    const priceMatch = priceRangeFilter.min === undefined || 
-                     (asset.priceAmount >= (priceRangeFilter.min || 0) && 
+    const priceMatch = priceRangeFilter.min === undefined ||
+                     (asset.priceAmount >= (priceRangeFilter.min || 0) &&
                       asset.priceAmount <= (priceRangeFilter.max || Infinity));
-    
-    const profitabilityMatch = profitabilityRangeFilter.min === undefined || 
-                             (asset.expectedReturn >= (profitabilityRangeFilter.min || 0) && 
+
+    const profitabilityMatch = profitabilityRangeFilter.min === undefined ||
+                             (asset.expectedReturn >= (profitabilityRangeFilter.min || 0) &&
                               asset.expectedReturn <= (profitabilityRangeFilter.max || Infinity));
-                              
-    const assetTypeMatch = assetTypeFilter === '' || asset.type === assetTypeFilter;
+
+    const categoryMatch = categoryFilter === '' || asset.category === categoryFilter;
 
     return (
       (asset.city?.toLowerCase().includes(lowercasedFilter) ||
        asset.country?.toLowerCase().includes(lowercasedFilter)) &&
       priceMatch &&
       profitabilityMatch &&
-      assetTypeMatch // Add the asset type check here
+      categoryMatch
     );
   });
 
@@ -72,6 +79,12 @@ const Dashboard: React.FC = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
 
+          // Fetch request count
+          const { count: requestsCount } = await supabase
+            .from('infoactivo')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+
           setUserProfile({
             id: user.id,
             role: profile.role || 'buyer_mandatary',
@@ -80,7 +93,7 @@ const Dashboard: React.FC = () => {
             fullName: profile.full_name || '',
             email: user.email || '',
             assetsCount: count || 0,
-            requestsCount: 0
+            requestsCount: requestsCount || 0 // Use fetched count
           });
           if (profile.admin) setIsAdmin(true);
         }
@@ -135,40 +148,119 @@ const Dashboard: React.FC = () => {
     const fetchAllAssets = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: assets } = await supabase
+        const { data: assets, error } = await supabase
           .from('activos')
-          .select('*')
+          .select('id, purpose, category, subcategory1, subcategory2, country, city, area, expectedReturn, priceAmount, priceCurrency, description, creado, user_id')
           .neq('user_id', user.id);
-        setAllAssets(assets || []);
+
+        if (error) {
+          console.error("Error fetching all assets:", error);
+          toast({
+            title: "Error al cargar activos",
+            description: `No se pudieron cargar los activos: ${error.message}`,
+            variant: "destructive",
+          });
+        } else {
+          console.log("Fetched all assets:", assets);
+          setAllAssets(assets || []);
+        }
       }
     };
 
     fetchAllAssets();
-  }, []);
+  }, []); // Keep dependencies empty to fetch only once
+
+  // Fetch user's specific requests
+  useEffect(() => {
+    const fetchUserRequests = async () => {
+      if (userProfile?.id) { // Ensure we have the user ID
+        const { data: requests, error } = await supabase
+          .from('infoactivo')
+          .select('*') // Select all columns for the request
+          .eq('user_id', userProfile.id)
+          .order('created_at', { ascending: false }); // Optional: order by creation date
+
+        if (error) {
+          console.error("Error fetching user requests:", error);
+          toast({
+            title: "Error al cargar solicitudes",
+            description: `No se pudieron cargar sus solicitudes: ${error.message}`,
+            variant: "destructive",
+          });
+        } else {
+          // Map Supabase columns to InformationRequest type fields
+          const formattedRequests: InformationRequest[] = (requests || []).map(req => ({
+            id: req.id,
+            assetId: req.activo_id,
+            requesterId: req.user_id, // Map user_id to requesterId
+            status: req.estado || 'pending', // Map estado to status
+            creado: req.created_at, // Map created_at to creado
+            updatedAt: req.updated_at || req.created_at, // Map updated_at (or fallback to created_at)
+            notes: req.mensaje, // Map mensaje to notes
+            // Optional fields like ndaLink etc. are not directly available in infoactivo,
+            // they would need to be fetched or handled differently if required later.
+          }));
+          setUserRequests(formattedRequests);
+        }
+      }
+    };
+
+    fetchUserRequests();
+  }, [userProfile, toast]); // Re-run if userProfile changes
 
   const handleRequestInfo = (asset: Asset) => {
     setSelectedAsset(asset);
     setIsRequestFormOpen(true);
   };
 
-  const handleRequestSubmit = () => {
+  // Renamed and updated to increment count
+  const handleRequestSuccess = () => {
     setIsRequestFormOpen(false);
-    // Aquí puedes agregar lógica para actualizar solicitudes después del envío
+    // Re-fetch requests to update the list after submission
+     if (userProfile?.id) {
+        const fetchUserRequests = async () => {
+            const { data: requests, error } = await supabase
+              .from('infoactivo')
+              .select('*')
+              .eq('user_id', userProfile.id)
+              .order('created_at', { ascending: false });
+
+            if (!error && requests) {
+                 const formattedRequests: InformationRequest[] = (requests || []).map(req => ({
+                    id: req.id,
+                    assetId: req.activo_id,
+                    requesterId: req.user_id,
+                    status: req.estado || 'pending',
+                    creado: req.created_at,
+                    updatedAt: req.updated_at || req.created_at,
+                    notes: req.mensaje,
+                 }));
+                 setUserRequests(formattedRequests);
+                 // Also update the count in the profile
+                 setUserProfile(prevProfile => {
+                    if (!prevProfile) return null;
+                    return { ...prevProfile, requestsCount: formattedRequests.length };
+                 });
+            }
+        };
+        fetchUserRequests();
+     }
   };
 
+
   const handleAssetSubmit = () => {
-    // Lógica post-envío de activo
   };
 
   const handleSignNda = (requestId: string) => {
-    // Aquí va la lógica para firmar NDA
+    console.log("Signing NDA for request:", requestId);
   };
 
   const getAssetById = (id: string) => {
-    return allAssets.find(asset => asset.id === id);
+    // Look in both userAssets and allAssets
+    return userAssets.find(asset => asset.id === id) || allAssets.find(asset => asset.id === id);
   };
 
-  const mockAssets = filteredAssets;
+  const mockAssets = filteredAssets; // Keep using filteredAssets for discovery tab
 
   if (!isAdmin && authChecked) {
     return (
@@ -195,16 +287,29 @@ const Dashboard: React.FC = () => {
                     Subir Activo
                   </TabsTrigger>
                 </TabsList>
-                <Button
+                <div className="flex items-center gap-2">
+                  <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setViewMode(prev => prev === 'card' ? 'list' : 'card')}
-                  >
-                    {viewMode === 'card' ? <List className="h-4 w-4 mr-2" /> : <LayoutGrid className="h-4 w-4 mr-2" />}
-                    {viewMode === 'card' ? 'Vista Lista' : 'Vista Tarjeta'}
-                  </Button>
-              </div>
+                    onClick={() => setViewMode('card')}
 
+                    className={viewMode === 'card' ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : ''}
+                  >
+                    <LayoutGrid className="h-4 w-4 mr-2" />
+                    Vista Tarjeta
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setViewMode('list')}
+
+                    className={viewMode === 'list' ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : ''}
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    Vista Lista
+                  </Button>
+                </div>
+              </div>
 
               <TabsContent value="discover" className="mt-16 md:mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -225,7 +330,7 @@ const Dashboard: React.FC = () => {
                       className="border rounded px-2 py-1 w-full h-9"
                       value={
                         profitabilityRangeFilter.min === undefined && profitabilityRangeFilter.max === undefined
-                          ? 'all' 
+                          ? 'all'
                           : `${profitabilityRangeFilter.min || 0}-${profitabilityRangeFilter.max || 100}`
                       }
                       onChange={(e) => {
@@ -247,22 +352,17 @@ const Dashboard: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="assetType">Tipo de Activo:</label>
+                    <label htmlFor="category">Categoría:</label>
                     <select
-                      id="assetType"
+                      id="category"
                       className="border rounded px-2 py-1 w-full h-9"
-                      value={assetTypeFilter}
-                      onChange={(e) => setAssetTypeFilter(e.target.value)}
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
                     >
-                      <option value="">Todos</option>
-                      <option value="residential">Residencial</option>
-                      <option value="commercial">Comercial</option>
-                      <option value="greenfield">Greenfield</option>
-                      <option value="brownfield">Brownfield</option>
-                      <option value="land">Terreno</option>
-                      <option value="hotel">Hotel</option>
-                      <option value="industrial">Industrial</option>
-                      <option value="mixed">Mixto</option>
+                      <option value="">Todas</option>
+                      {mainCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -272,7 +372,7 @@ const Dashboard: React.FC = () => {
                       className="border rounded px-2 py-1 w-full h-9"
                       value={
                         priceRangeFilter.min === undefined && priceRangeFilter.max === undefined
-                          ? 'all' 
+                          ? 'all'
                           : `${priceRangeFilter.min || 0}-${priceRangeFilter.max || 99999999}`
                       }
                       onChange={(e) => {
@@ -295,13 +395,12 @@ const Dashboard: React.FC = () => {
                     </select>
                   </div>
                 </div>
-
                 {viewMode === 'card' ? (
                   <AssetList
                     assets={mockAssets}
                     location={locationFilter}
                     profitability={profitabilityRangeFilter.min !== undefined ? `${profitabilityRangeFilter.min}-${profitabilityRangeFilter.max}` : ''}
-                    assetType={assetTypeFilter}
+
                     price={priceRangeFilter.min !== undefined ? `${priceRangeFilter.min}-${priceRangeFilter.max}` : ''}
                     onRequestInfo={(assetId) => handleRequestInfo(getAssetById(assetId))}
                     buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
@@ -314,7 +413,7 @@ const Dashboard: React.FC = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead>ID</TableHead>
-                              <TableHead>Tipo</TableHead>
+                              <TableHead>Categoría</TableHead>
                               <TableHead>Localización</TableHead>
                               <TableHead>Precio</TableHead>
                               <TableHead>Retorno</TableHead>
@@ -330,9 +429,13 @@ const Dashboard: React.FC = () => {
                               </TableRow>
                             ) : (
                               mockAssets.map(asset => (
-                                <TableRow key={asset.id}>
+                              <TableRow key={asset.id}>
                                   <TableCell className="font-medium text-xs">{asset.id}</TableCell>
-                                  <TableCell className="capitalize">{asset.type}</TableCell>
+                                  <TableCell>
+                                    {asset.category}
+                                    {asset.subcategory1 && ` > ${asset.subcategory1}`}
+                                    {asset.subcategory2 && ` > ${asset.subcategory2}`}
+                                  </TableCell>
                                   <TableCell>{asset.city}, {asset.country}</TableCell>
                                   <TableCell>{formatCurrency(asset.priceAmount, asset.priceCurrency)}</TableCell>
                                   <TableCell>{asset.expectedReturn ? `${asset.expectedReturn}%` : '-'}</TableCell>
@@ -356,12 +459,11 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 )}
-
                 <RequestForm
                   asset={selectedAsset}
                   open={isRequestFormOpen}
                   onClose={() => setIsRequestFormOpen(false)}
-                  onSubmit={handleRequestSubmit}
+                  onSuccess={handleRequestSuccess} // Changed prop name
                   buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
                 />
               </TabsContent>
@@ -411,21 +513,27 @@ const Dashboard: React.FC = () => {
                           </TableHeader>
                           <TableBody>
                             {userRequests.map(request => {
-                              const asset = getAssetById(request.assetId);
+                              const asset = getAssetById(request.assetId); // Use updated getAssetById
                               return (
                                 <TableRow key={request.id}>
-                                  <TableCell className="font-medium">{request.id}</TableCell>
+                                  <TableCell className="font-medium text-xs">{request.id}</TableCell> {/* Use request ID */}
                                   <TableCell>
                                     <div className="flex flex-col">
-                                      <span>{asset?.id}</span>
-                                      <span className="text-xs text-estate-steel">{asset?.type} en {asset?.city}</span>
+                                      {/* Display asset details if found, otherwise just the ID */}
+                                      <span>ID: {request.assetId}</span>
+                                      {asset && (
+                                        <span className="text-xs text-estate-steel">
+                                          {asset.category} {asset.city && `en ${asset.city}`}
+                                        </span>
+                                      )}
                                     </div>
                                   </TableCell>
                                   <TableCell>
-                                    {safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}
+                                    {/* Use creado from the request object */}
+                                    {safeDateParser(request.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}
                                   </TableCell>
                                   <TableCell>
-                                    <StatusBadge status={request.status} />
+                                    <StatusBadge status={request.status} /> {/* Use status from request */}
                                   </TableCell>
                                   <TableCell className="text-left">
                                     {request.status === 'nda_requested' && (

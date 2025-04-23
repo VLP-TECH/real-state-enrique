@@ -10,8 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Copy } from 'lucide-react';
 import { Loader2 } from "lucide-react"
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale'; 
 
-// Function to generate a complex password
 const generatePassword = () => {
   const length = 12;
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
@@ -36,8 +37,10 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [solicitudes, setSolicitudes] = useState<any[]>([]); 
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
+  const [infoRequests, setInfoRequests] = useState<any[]>([]); 
+  const [loadingInfoRequests, setLoadingInfoRequests] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<number, string>>({});
@@ -49,7 +52,7 @@ const AdminDashboard = () => {
       const { data: { user }, error } = await supabase.auth.getUser();
 
       if (!user) {
-        // Si no hay usuario autenticado, redirigir al login
+        
         toast({
           title: 'Acceso no autorizado',
           description: 'Debes iniciar sesión para acceder al dashboard',
@@ -59,12 +62,11 @@ const AdminDashboard = () => {
         return;
       }
 
-      setAuthChecked(true); // Marcar que la verificación se completó
+      setAuthChecked(true); 
     };
 
     checkAuth();
 
-    // Suscribirse a cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         navigate('/');
@@ -136,6 +138,73 @@ const AdminDashboard = () => {
     fetchSolicitudes();
   }, [isAdmin]);
 
+  useEffect(() => {
+    const fetchInfoRequests = async () => {
+      if (!isAdmin) return; 
+      setLoadingInfoRequests(true);
+      try {
+        
+        const { data, error } = await supabase
+          .from('infoactivo')
+          .select(`
+            id,
+            created_at,
+            mensaje,
+            activo_id,
+            user_id,
+            activos:activo_id ( id, category, subcategory1, subcategory2, city, country ),
+            profiles:user_id ( user_id ) 
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+           throw error;
+         }
+         
+         
+         console.log('Raw data from infoactivo fetch:', data); 
+
+         
+         setInfoRequests(data || []); 
+ 
+       } catch (error: any) {
+        
+        console.error('Error fetching info requests:', error);
+
+        let errorMessage = "Ocurrió un error desconocido al cargar las solicitudes de información.";
+        if (error && error.message) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        }
+        
+        if (error && error.details) {
+            errorMessage += ` Detalles: ${error.details}`;
+        }
+        if (error && error.hint) {
+            errorMessage += ` Pista: ${error.hint}`;
+        }
+         
+        if (error && (error.code?.includes('PGRST') || error.message?.includes('400'))) {
+             errorMessage += " (Sugerencia: Verifica la sintaxis de la consulta SELECT, los nombres de las columnas y las relaciones entre tablas.)";
+        }
+
+        toast({
+          title: 'Error al Cargar Solicitudes de Info',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      } finally {
+        setLoadingInfoRequests(false);
+      }
+    };
+
+    if (isAdmin) { 
+        fetchInfoRequests();
+    }
+  }, [isAdmin, toast]); 
+
+
   const handleAprobar = (id: number) => {
     setOpenRequests(prevOpenRequests => ({
       ...prevOpenRequests,
@@ -161,7 +230,7 @@ const AdminDashboard = () => {
 
   const handleDenegar = async (id: number) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('solicitudes')
         .update({ estado: false })
         .eq('id', id);
@@ -301,7 +370,16 @@ const AdminDashboard = () => {
 
     setSolicitudes((prev) => prev.filter((s) => s.id !== solicitudId));
 
-    navigate('/dashboard/admin');
+    navigate('/dashboard/admin'); 
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: es });
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return dateString; 
+    }
   };
 
   if (!authChecked) {
@@ -327,59 +405,65 @@ const AdminDashboard = () => {
 
             <div className="lg:col-span-3">
               <Tabs defaultValue="admin" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-1 md:inline-flex border-[#E1D48A]">
+                
+                <TabsList className="inline-flex border-[#E1D48A]"> 
                   <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                    Gestión de Solicitudes
+                    Gestión de Registros
+                  </TabsTrigger>
+                  <TabsTrigger value="info-requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                    Solicitudes de Información
                   </TabsTrigger>
                 </TabsList>
 
+                
                 <TabsContent value="admin" className="mt-16 md:mt-6 space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Gestión de Solicitudes</CardTitle>
+                      <CardTitle>Gestión de Solicitudes de Registro</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {loadingSolicitudes ? (
-                        <p>Cargando solicitudes...</p>
+                        <div className="flex justify-center items-center p-4">
+                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
+                        </div>
                       ) : solicitudes.length === 0 ? (
-                        <p>No hay solicitudes disponibles.</p>
+                        <p>No hay solicitudes de registro pendientes.</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Teléfono</TableHead>
-                                <TableHead>Empresa</TableHead>
-                                <TableHead>Rol</TableHead>
-                                <TableHead>Mensaje</TableHead>
-                                <TableHead className="text-left">Acciones</TableHead>
-                              </TableRow>
+                              
+                              <TableRow><TableHead>Nombre</TableHead><TableHead>Email</TableHead><TableHead>Teléfono</TableHead><TableHead>Empresa</TableHead><TableHead>Rol Solicitado</TableHead><TableHead>Mensaje Registro</TableHead><TableHead className="text-left">Acciones Registro</TableHead></TableRow>
                             </TableHeader>
                             <TableBody>
-                              {solicitudes.map((solicitud) => {
+                              
+                              {solicitudes.flatMap((solicitud) => {
                                 const isOpen = openRequests[solicitud.id];
                                 const generatedPassword = generatedPasswords[solicitud.id] || '';
+                                const rows = [];
 
-                                return [
+                                
+                                rows.push(
                                   <TableRow key={solicitud.id} style={{ borderBottomWidth: isOpen ? 0 : undefined }}>
-                                    <TableCell>{solicitud.nombre_completo}</TableCell>
+                                    <TableCell className="font-medium">{solicitud.nombre_completo}</TableCell>
                                     <TableCell>{solicitud.correo_electronico}</TableCell>
-                                    <TableCell>{solicitud.numero_telefono}</TableCell>
-                                    <TableCell>{solicitud.empresa}</TableCell>
+                                    <TableCell>{solicitud.numero_telefono || '-'}</TableCell>
+                                    <TableCell>{solicitud.empresa || '-'}</TableCell>
                                     <TableCell>{mapRolLegible(solicitud.su_rol)}</TableCell>
-                                    <TableCell>{solicitud.mensaje || 'No hay mensaje'}</TableCell>
+                                    <TableCell className="max-w-[200px] truncate">{solicitud.mensaje || '-'}</TableCell>
                                     <TableCell className="text-left">
                                       <div className="flex gap-2">
                                         <Button
+                                          aria-label={openRequests[solicitud.id] ? 'Cancelar aprobación' : 'Aprobar solicitud'}
                                           size="sm"
-                                          variant="default"
+                                          variant="outline" 
                                           onClick={() => handleAprobar(solicitud.id)}
+                                          className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white" 
                                         >
                                           {openRequests[solicitud.id] ? 'Cancelar' : 'Aprobar'}
                                         </Button>
                                         <Button
+                                          aria-label="Denegar solicitud"
                                           size="sm"
                                           variant="destructive"
                                           onClick={() => handleDenegar(solicitud.id)}
@@ -388,52 +472,63 @@ const AdminDashboard = () => {
                                         </Button>
                                       </div>
                                     </TableCell>
-                                  </TableRow>,
+                                  </TableRow>
+                                );
 
-                                  isOpen && (
-                                    <TableRow key={`{solicitud.id}-details`}>
-                                      <TableCell colSpan={7}>
-                                        <div className="flex gap-2 justify-between">
-                                          <div className="flex gap-2">
-                                            <div className="flex items-center">
-                                              <input
-                                                type="text"
-                                                placeholder="Nueva Contraseña"
-                                                className="border p-2 rounded"
-                                                value={generatedPassword}
-                                                readOnly
-                                              />
+                                
+                                if (isOpen) {
+                                  rows.push(
+                                    <TableRow key={`${solicitud.id}-details`} className="bg-gray-50">
+                                      <TableCell colSpan={7} className="p-4">
+                                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                                              <div className="flex items-center border rounded">
+                                                <input
+                                                  type="text"
+                                                  placeholder="Generar contraseña"
+                                                  className="p-2 rounded-l focus:outline-none focus:ring-1 focus:ring-[#E1D48A]"
+                                                  value={generatedPassword}
+                                                  readOnly
+                                                  aria-label="Contraseña generada"
+                                                />
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  onClick={() => handleCopyToClipboard(generatedPassword)}
+                                                  disabled={!generatedPassword}
+                                                  className="rounded-l-none"
+                                                  aria-label="Copiar contraseña"
+                                                >
+                                                  <Copy className="h-4 w-4" />
+                                                </Button>
+                                              </div>
                                               <Button
                                                 size="sm"
-                                                variant="default"
-                                                onClick={() => handleCopyToClipboard(generatedPassword)}
-                                              >
-                                                <Copy className="h-4 w-4" />
-                                              </Button>
-                                            </div>
-                                            <div className="flex items-center">
-                                              <Button
-                                                size="sm"
-                                                variant="default"
+                                                variant="outline"
                                                 onClick={() => handleGenerarPassword(solicitud.id)}
-                                                className="flex-grow"
+                                                aria-label="Generar nueva contraseña"
                                               >
                                                 Generar
                                               </Button>
                                             </div>
-                                          </div>
-                                          <Button
-                                            size="sm"
-                                            variant="default"
-                                            onClick={() => handleCrearCuenta(solicitud.id, setLoadingCrearCuenta)}
-                                          >
-                                            Crear Cuenta
+                                            <Button
+                                              size="sm"
+                                              variant="default"
+                                              onClick={() => handleCrearCuenta(solicitud.id, setLoadingCrearCuenta)}
+                                              disabled={!generatedPassword || loadingCrearCuenta}
+                                              className="bg-green-600 hover:bg-green-700"
+                                              aria-label="Crear cuenta de usuario"
+                                            >
+                                              {loadingCrearCuenta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                              Crear Cuenta
                                           </Button>
                                         </div>
                                       </TableCell>
                                     </TableRow>
-                                  ),
-                                ];
+                                  );
+                                }
+                                
+                                return rows; 
                               })}
                             </TableBody>
                           </Table>
@@ -442,6 +537,49 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
+
+                
+                <TabsContent value="info-requests" className="mt-16 md:mt-6 space-y-6">
+                   <Card>
+                     <CardHeader>
+                       <CardTitle>Solicitudes de Información de Activos</CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                       {loadingInfoRequests ? (
+                         <div className="flex justify-center items-center p-4">
+                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
+                         </div>
+                       ) : infoRequests.length === 0 ? (
+                         <p>No hay solicitudes de información disponibles.</p>
+                       ) : (
+                         <div className="overflow-x-auto">
+                           <Table>
+                             <TableHeader>
+                               
+                              <TableRow><TableHead>Usuario (ID)</TableHead><TableHead>Activo (ID/Cat)</TableHead><TableHead>Ubicación Activo</TableHead><TableHead>Mensaje Solicitud</TableHead><TableHead>Fecha Solicitud</TableHead></TableRow>
+                             </TableHeader>
+                             <TableBody>
+                               {infoRequests.map((req) => (
+                              <TableRow key={req.id}>
+                                <TableCell className="font-medium text-xs text-gray-600" title={req.user_id}>{req.user_id?.substring(0, 8) || 'N/A'}...</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                     <span className="text-xs text-gray-500 truncate" title={req.activo_id}>ID: {req.activo_id.substring(0, 8)}...</span>
+                                        <span>{req.activos?.category || 'N/A'}</span>
+                                     </div>
+                                   </TableCell>
+                                   <TableCell>{req.activos ? `${req.activos.city}, ${req.activos.country}` : 'N/A'}</TableCell>
+                                   <TableCell className="max-w-[250px] truncate" title={req.mensaje || ''}>{req.mensaje || '-'}</TableCell>
+                                   <TableCell>{formatRelativeTime(req.created_at)}</TableCell>
+                                 </TableRow>
+                               ))}
+                             </TableBody>
+                           </Table>
+                         </div>
+                       )}
+                     </CardContent>
+                   </Card>
+                 </TabsContent>
               </Tabs>
             </div>
           </div>

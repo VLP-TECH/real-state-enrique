@@ -44,16 +44,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación básica
     if (!formData.fullName || !formData.email || !formData.phone || !formData.company || !formData.role) {
+      console.warn("Form validation failed: Missing required fields.");
       return;
     }
 
     setIsSubmitting(true);
 
-    // Enviar los datos a la tabla 'solicitudes' en Supabase
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('solicitudes')
         .insert([
           {
@@ -71,7 +70,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
         throw error;
       }
 
-      // Llamar al `onSubmit` y actualizar el estado
       onSubmit(formData);
       setIsSubmitting(false);
       setIsSubmitted(true);
@@ -130,7 +128,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
       <CardContent>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nombre Completo <span className="text-estate-error">*</span></Label>
@@ -169,8 +166,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
                 />
               </div>
             </div>
-
-            {/* Right Column */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="company">Empresa <span className="text-estate-error">*</span></Label>

@@ -40,13 +40,12 @@ const Index = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleLogin(email, password); // Usar la función handleLogin de AuthManager
+    await handleLogin(email, password);
   };
   
   return (
     <div className="min-h-screen bg-estate-offwhite">
       <header className="bg-estate-navy text-white relative">
-        {/* Top navigation bar - Make the gold color more prominent */}
         <div className="estate-container py-3 relative z-20">
           <div className="flex justify-between items-center">
             
@@ -68,7 +67,6 @@ const Index = () => {
             </div>
             
             <div className="flex w-full gap-4 items-center justify-end">
-              {/* Desktop navigation - visible on medium screens and up */}
               <div className="hidden md:flex gap-4">
                 <Button variant="link" className="text-[#E1D48A] font-semibold hover:text-white hover:bg-[#E1D48A]/30 p-2 rounded-md transition-colors">
                   About
@@ -81,7 +79,6 @@ const Index = () => {
                 </Button>
               </div>
               
-              {/* Mobile navigation - visible on small screens */}
               <div className="md:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

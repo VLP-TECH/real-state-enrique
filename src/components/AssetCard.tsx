@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Asset } from '@/utils/types';
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar, TrendingUp, Info } from 'lucide-react';
-import { formatCurrency, formatDate, safeDateParser } from '@/utils/formatters';
+import { formatCurrency, safeDateParser } from '@/utils/formatters';
 
 interface AssetCardProps {
   asset: Asset;
@@ -12,24 +11,9 @@ interface AssetCardProps {
 }
 
 const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
-  console.log("Asset:", asset);
   const formattedPrice = formatCurrency(asset.priceAmount, asset.priceCurrency);
   const formattedDate = safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida';
 
-  const getTypeLabel = () => {
-    const typeTranslations: Record<string, string> = {
-      'residential': 'Residencial',
-      'commercial': 'Comercial',
-      'greenfield': 'Greenfield',
-      'brownfield': 'Brownfield',
-      'land': 'Terreno',
-      'hotel': 'Hotel',
-      'industrial': 'Industrial',
-      'mixed': 'Mixto'
-    };
-    return typeTranslations[asset.type] || asset.type.charAt(0).toUpperCase() + asset.type.slice(1);
-  };
-  
   const getPurposeColor = () => {
     switch (asset.purpose) {
       case 'sale':
@@ -83,13 +67,27 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
             </div>
           </div>
           
-          <div className="bg-estate-offwhite rounded p-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-estate-steel">Tipo de Activo</span>
-              <span className="font-medium">{getTypeLabel()}</span>
-            </div>
+          <div className="bg-estate-offwhite rounded p-3 space-y-1">
+            {asset.category && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-estate-steel">Categoría</span>
+                <span className="font-medium text-right">{asset.category}</span>
+              </div>
+            )}
+            {asset.subcategory1 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-estate-steel">Subcategoría 1</span>
+                <span className="font-medium text-right">{asset.subcategory1}</span>
+              </div>
+            )}
+            {asset.subcategory2 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-estate-steel">Subcategoría 2</span>
+                <span className="font-medium text-right">{asset.subcategory2}</span>
+              </div>
+            )}
             
-            <div className="flex justify-between items-center mt-1">
+            <div className="flex justify-between items-center pt-1"> 
               <span className="text-sm text-estate-steel">Precio</span>
               <span className="font-medium">{formattedPrice}</span>
             </div>
