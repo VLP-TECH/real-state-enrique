@@ -43,8 +43,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
             {getRoleDisplay(user.role)}
           </div>
           <Button
-            variant="outline" 
-            className="border-[#E1D48A] text-[#E1D48A] hover:bg-[#E1D48A] hover:text-estate-navy"
+            variant="destructive" // Use destructive variant for red styling
+            // className is handled by the variant
             onClick={handleLogout}
           >
             Cerrar Sesión

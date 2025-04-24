@@ -10,7 +10,7 @@ import StatusBadge from './StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from "@/components/ui/button";
-import { FileText, Info, List, LayoutGrid } from 'lucide-react';
+import { FileText, Info, List, LayoutGrid, Eye } from 'lucide-react'; // Import Eye icon
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -251,8 +251,57 @@ const Dashboard: React.FC = () => {
   const handleAssetSubmit = () => {
   };
 
-  const handleSignNda = (requestId: string) => {
-    console.log("Signing NDA for request:", requestId);
+  const handleSignNda = async (requestId: string) => {
+    console.log("Attempting to sign NDA for request:", requestId);
+    try {
+      // Update Supabase: set estado to 'nda_received' and nda_firmado to true
+      const { error } = await supabase
+        .from('infoactivo')
+        .update({ estado: 'nda_received', nda_firmado: true }) // Assuming 'nda_firmado' column exists
+        .eq('id', requestId);
+
+      if (error) {
+        // Check if the error is due to the column not existing
+        if (error.message.includes('column "nda_firmado" does not exist')) {
+           console.warn("Column 'nda_firmado' does not exist in 'infoactivo'. Skipping update for this column.");
+           // Attempt update without nda_firmado
+           const { error: fallbackError } = await supabase
+             .from('infoactivo')
+             .update({ estado: 'nda_received' })
+             .eq('id', requestId);
+           if (fallbackError) throw fallbackError; // Throw if the fallback also fails
+        } else {
+          throw error; // Throw other errors
+        }
+      }
+
+      // Update local state
+      setUserRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, status: 'nda_received' } : req // Update status locally
+        )
+      );
+
+      toast({
+        title: 'NDA Firmado (Simulado)',
+        description: 'El estado de la solicitud se ha actualizado a NDA Recibido.',
+        // Add actual NDA signing/verification logic here
+      });
+
+    } catch (error: any) {
+      console.error('Error signing NDA (updating status):', error);
+      toast({
+        title: 'Error al Firmar NDA',
+        description: error.message || 'Hubo un problema al actualizar el estado de la solicitud.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewFiles = (requestId: string) => {
+    console.log("Viewing files for request:", requestId);
+    // Placeholder for actual file viewing logic
+    toast({ title: "Funcionalidad no implementada", description: "La visualización de archivos aún no está conectada." });
   };
 
   const getAssetById = (id: string) => {
@@ -536,16 +585,41 @@ const Dashboard: React.FC = () => {
                                     <StatusBadge status={request.status} /> {/* Use status from request */}
                                   </TableCell>
                                   <TableCell className="text-left">
+                                    {/* Conditional Actions based on status */}
+                                    {request.status === 'approved' && (
+                                      <span className="text-sm text-gray-500 italic">Esperando acción del administrador</span>
+                                    )}
                                     {request.status === 'nda_requested' && (
                                       <Button
                                         size="sm"
                                         variant="outline"
                                         onClick={() => handleSignNda(request.id)}
-                                        className="flex items-center gap-1 w-full"
+                                        className="flex items-center gap-1 w-full hover:bg-gray-100"
                                       >
-                                        <FileText className="h-3 w-3" />
+                                        <FileText className="h-3 w-3 mr-1" />
                                         <span>Firmar NDA</span>
                                       </Button>
+                                    )}
+                                    {request.status === 'nda_received' && (
+                                      // Display message after user signs NDA
+                                      <span className="text-sm text-gray-500 italic">Esperando acción del administrador</span>
+                                    )}
+                                    {request.status === 'information_shared' && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline" // Using outline for consistency, adjust if needed
+                                        onClick={() => handleViewFiles(request.id)}
+                                        className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white" // Added darker hover
+                                      >
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        <span>Ver Archivos</span>
+                                      </Button>
+                                    )}
+                                    {request.status === 'rejected' && (
+                                      <span className="text-sm text-red-600 font-medium">Solicitud rechazada</span>
+                                    )}
+                                     {request.status === 'pending' && (
+                                      <span className="text-sm text-gray-500 italic">Pendiente de revisión</span>
                                     )}
                                   </TableCell>
                                 </TableRow>

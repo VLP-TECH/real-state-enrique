@@ -64,7 +64,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSucce
     const requestData = {
       activo_id: asset.id,
       user_id: userId,
-      mensaje: notes || null, 
+      mensaje: notes || null,
+      estado: 'pending' // Explicitly set status to pending
     };
 
     try {

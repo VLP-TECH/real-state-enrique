@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { TabsContent, TabsList, Tabs, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Copy } from 'lucide-react';
+import { Copy, Check, X, Send, Share2 } from 'lucide-react'; // Import Check, X, Send, and Share2 icons
 import { Loader2 } from "lucide-react"
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale'; 
+import { es } from 'date-fns/locale';
+import StatusBadge from './StatusBadge'; // Import StatusBadge
 
 const generatePassword = () => {
   const length = 12;
@@ -113,7 +114,6 @@ const AdminDashboard = () => {
         setLoading(false);
       }
     };
-
     fetchProfile();
   }, []);
 
@@ -152,8 +152,9 @@ const AdminDashboard = () => {
             mensaje,
             activo_id,
             user_id,
+            estado,
             activos:activo_id ( id, category, subcategory1, subcategory2, city, country ),
-            profiles:user_id ( user_id ) 
+            profiles:user_id ( user_id )
           `)
           .order('created_at', { ascending: false });
 
@@ -370,8 +371,141 @@ const AdminDashboard = () => {
 
     setSolicitudes((prev) => prev.filter((s) => s.id !== solicitudId));
 
-    navigate('/dashboard/admin'); 
+    navigate('/dashboard/admin');
+    setLoadingCrearCuenta(false); // Ensure loading state is reset
   };
+
+  // --- New Handlers for Info Requests ---
+  const handleApproveInfoRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('infoactivo')
+        .update({ estado: 'approved' }) // Set status to approved
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change immediately
+      setInfoRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, estado: 'approved' } : req
+        )
+      );
+
+      toast({
+        title: 'Solicitud Aprobada',
+        description: 'La solicitud de información ha sido aprobada.',
+      });
+    } catch (error: any) {
+      console.error('Error approving info request:', error);
+      toast({
+        title: 'Error al Aprobar',
+        description: error.message || 'Hubo un problema al aprobar la solicitud.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDenyInfoRequest = async (requestId: string) => {
+     try {
+      const { error } = await supabase
+        .from('infoactivo')
+        .update({ estado: 'rejected' }) // Set status to rejected
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Update local state
+      setInfoRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, estado: 'rejected' } : req
+        )
+      );
+
+      toast({
+        title: 'Solicitud Denegada',
+        description: 'La solicitud de información ha sido denegada.',
+        variant: 'destructive',
+      });
+    } catch (error: any) {
+      console.error('Error denying info request:', error);
+      toast({
+        title: 'Error al Denegar',
+        description: error.message || 'Hubo un problema al denegar la solicitud.',
+        variant: 'destructive',
+      });
+    }
+  }; // Correctly close handleDenyInfoRequest
+
+  const handleSendNda = async (requestId: string) => { // Define handleSendNda correctly
+    console.log("Attempting to send NDA for request:", requestId);
+    try {
+      // Update status in Supabase to 'nda_requested'
+      const { error } = await supabase
+        .from('infoactivo')
+        .update({ estado: 'nda_requested' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Update local state
+      setInfoRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, estado: 'nda_requested' } : req
+        )
+      );
+
+      toast({
+        title: 'NDA Enviado (Simulado)',
+        description: 'El estado de la solicitud se ha actualizado a NDA Solicitado.',
+        // Add actual NDA sending logic here in a real implementation
+      });
+
+    } catch (error: any) {
+      console.error('Error sending NDA (updating status):', error);
+      toast({
+        title: 'Error al Enviar NDA',
+        description: error.message || 'Hubo un problema al actualizar el estado de la solicitud.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShareInformation = async (requestId: string) => {
+    console.log("Attempting to share information for request:", requestId);
+    // Placeholder for actual information sharing logic (e.g., updating status, sending links)
+    // For now, let's just update the status to 'information_shared' as an example
+     try {
+      const { error } = await supabase
+        .from('infoactivo')
+        .update({ estado: 'information_shared' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Update local state
+      setInfoRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, estado: 'information_shared' } : req
+        )
+      );
+
+      toast({
+        title: 'Información Compartida (Simulado)',
+        description: 'El estado de la solicitud se ha actualizado.',
+      });
+
+    } catch (error: any) {
+      console.error('Error sharing information (updating status):', error);
+      toast({
+        title: 'Error al Compartir Información',
+        description: error.message || 'Hubo un problema al actualizar el estado.',
+        variant: 'destructive',
+      });
+    }
+  };
+  // --- End New Handlers ---
+
 
   const formatRelativeTime = (dateString: string) => {
     try {
@@ -465,8 +599,9 @@ const AdminDashboard = () => {
                                         <Button
                                           aria-label="Denegar solicitud"
                                           size="sm"
-                                          variant="destructive"
+                                          variant="outline" // Change variant
                                           onClick={() => handleDenegar(solicitud.id)}
+                                          className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white" // Add custom classes
                                         >
                                           Denegar
                                         </Button>
@@ -555,8 +690,15 @@ const AdminDashboard = () => {
                          <div className="overflow-x-auto">
                            <Table>
                              <TableHeader>
-                               
-                              <TableRow><TableHead>Usuario (ID)</TableHead><TableHead>Activo (ID/Cat)</TableHead><TableHead>Ubicación Activo</TableHead><TableHead>Mensaje Solicitud</TableHead><TableHead>Fecha Solicitud</TableHead></TableRow>
+                               <TableRow>
+                                 <TableHead>Usuario (ID)</TableHead>
+                                 <TableHead>Activo (ID/Cat)</TableHead>
+                                 <TableHead>Ubicación Activo</TableHead>
+                                 <TableHead>Mensaje Solicitud</TableHead>
+                                 <TableHead>Fecha Solicitud</TableHead>
+                                 <TableHead>Estado</TableHead> {/* Add Estado column header */}
+                                 <TableHead className="text-left">Acciones</TableHead> {/* Add Acciones column header */}
+                               </TableRow>
                              </TableHeader>
                              <TableBody>
                                {infoRequests.map((req) => (
@@ -571,6 +713,69 @@ const AdminDashboard = () => {
                                    <TableCell>{req.activos ? `${req.activos.city}, ${req.activos.country}` : 'N/A'}</TableCell>
                                    <TableCell className="max-w-[250px] truncate" title={req.mensaje || ''}>{req.mensaje || '-'}</TableCell>
                                    <TableCell>{formatRelativeTime(req.created_at)}</TableCell>
+                                   <TableCell>
+                                     {/* Display status using StatusBadge */}
+                                     <StatusBadge status={req.estado || 'pending'} />
+                                   </TableCell>
+                                   <TableCell className="text-left">
+                                     {/* Conditional Actions */}
+                                     {req.estado === 'pending' ? (
+                                       <div className="flex gap-2">
+                                         <Button
+                                           size="sm"
+                                           variant="outline" // Keep outline for consistency with registration 'Aprobar'
+                                           onClick={() => handleApproveInfoRequest(req.id)}
+                                           className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white" // Match registration 'Aprobar' style
+                                           aria-label="Aprobar solicitud de información"
+                                         >
+                                           Aprobar
+                                         </Button>
+                                         <Button
+                                           size="sm"
+                                           variant="outline" // Change variant
+                                           onClick={() => handleDenyInfoRequest(req.id)}
+                                           className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white" // Add custom classes
+                                           aria-label="Denegar solicitud de información"
+                                         >
+                                           Denegar
+                                         </Button>
+                                       </div>
+                                     ) : req.estado === 'rejected' ? (
+                                       // Display specific message for rejected status
+                                       <span className="text-sm text-red-600 font-medium">Solicitud rechazada</span>
+                                     ) : req.estado === 'approved' ? (
+                                       // Display "Enviar NDA" button for approved status in Admin view
+                                       <Button
+                                         size="sm"
+                                         variant="outline"
+                                         onClick={() => handleSendNda(req.id)} // Correctly call handleSendNda
+                                         className="border-blue-500 text-blue-700 hover:bg-blue-600 hover:text-white px-2 py-1" // Darker hover bg, white text
+                                         aria-label="Enviar NDA"
+                                       >
+                                         <Send className="h-4 w-4 mr-1" /> Enviar NDA
+                                       </Button>
+                                     ) : req.estado === 'nda_requested' ? (
+                                        // Display message when NDA has been requested/sent by admin
+                                        <span className="text-sm text-gray-500 italic">Esperando acción del usuario</span>
+                                     ) : req.estado === 'nda_received' ? (
+                                        // Display "Compartir Información" button when NDA is received
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handleShareInformation(req.id)}
+                                          className="border-purple-500 text-purple-700 hover:bg-purple-600 hover:text-white px-2 py-1" // Darker hover bg, white text
+                                          aria-label="Compartir Información"
+                                        >
+                                          <Share2 className="h-4 w-4 mr-1" /> Compartir Información
+                                        </Button>
+                                     ) : req.estado === 'information_shared' ? (
+                                        // Display message after information has been shared
+                                        <span className="text-sm text-green-600 font-medium">Información enviada</span>
+                                     ) : (
+                                       // Default message for other statuses
+                                       <span className="text-sm text-gray-500 italic">Acción realizada</span>
+                                     )}
+                                   </TableCell>
                                  </TableRow>
                                ))}
                              </TableBody>
