@@ -570,12 +570,12 @@ const Dashboard: React.FC = () => {
                                     {request.status === 'nda_requested' && (
                                       <Button
                                         size="sm"
-                                        variant="outline"
+                                        variant="outline" // Using outline for consistency, adjust if needed
                                         onClick={() => handleSignNda(request.id)}
-                                        className="flex items-center gap-1 w-full hover:bg-gray-100"
+                                        className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white" // Added darker hover
                                       >
                                         <FileText className="h-3 w-3 mr-1" />
-                                        <span>Firmar NDA</span>
+                                        <span>Documento de Confidencialiad Firmado</span>
                                       </Button>
                                     )}
                                     {request.status === 'nda_received' && (
@@ -590,7 +590,7 @@ const Dashboard: React.FC = () => {
                                         className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white" // Added darker hover
                                       >
                                         <Eye className="h-3 w-3 mr-1" />
-                                        <span>Ver Archivos</span>
+                                        <span>Ver Documentación del Activo</span>
                                       </Button>
                                     )}
                                     {request.status === 'rejected' && (

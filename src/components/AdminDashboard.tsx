@@ -747,7 +747,7 @@ const AdminDashboard = () => {
                                          className="border-blue-500 text-blue-700 hover:bg-blue-600 hover:text-white px-2 py-1" // Darker hover bg, white text
                                          aria-label="Enviar NDA"
                                        >
-                                         <Send className="h-4 w-4 mr-1" /> Enviar NDA
+                                         <Send className="h-4 w-4 mr-1" /> Enviar Documentación de Confidencialidad
                                        </Button>
                                      ) : req.estado === 'nda_requested' ? (
                                         // Display message when NDA has been requested/sent by admin
@@ -761,11 +761,11 @@ const AdminDashboard = () => {
                                           className="border-purple-500 text-purple-700 hover:bg-purple-600 hover:text-white px-2 py-1" // Darker hover bg, white text
                                           aria-label="Compartir Información"
                                         >
-                                          <Share2 className="h-4 w-4 mr-1" /> Compartir Información
+                                          <Share2 className="h-4 w-4 mr-1" /> Enviar Documentación del Activo
                                         </Button>
                                      ) : req.estado === 'information_shared' ? (
                                         // Display message after information has been shared
-                                        <span className="text-sm text-green-600 font-medium">Información enviada</span>
+                                        <span className="text-sm text-green-600 font-medium"></span>
                                      ) : (
                                        // Default message for other statuses
                                        <span className="text-sm text-gray-500 italic">Acción realizada</span>

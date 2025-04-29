@@ -35,19 +35,19 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
         };
       case 'nda_requested':
         return {
-          label: 'NDA Solicitado',
+          label: 'Documentación de Confidencialidad Pendiente',
           color: 'bg-blue-100 border-blue-200 text-blue-800',
           icon: <FileText className="h-3.5 w-3.5" />,
         };
       case 'nda_received':
         return {
-          label: 'NDA Recibido',
+          label: 'Documentación de Confidencialidad Recibida',
           color: 'bg-indigo-100 border-indigo-200 text-indigo-800',
           icon: <Check className="h-3.5 w-3.5" />,
         };
       case 'information_shared':
         return {
-          label: 'Información Compartida',
+          label: 'Documentación del Activo Enviada',
           color: 'bg-purple-100 border-purple-200 text-purple-800',
           icon: <Info className="h-3.5 w-3.5" />,
         };
