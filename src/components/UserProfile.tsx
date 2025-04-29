@@ -39,12 +39,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           <p className="text-estate-lightgrey text-sm">Miembro desde {new Date(user.registrationDate).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-5">
-          <div className="bg-estate-steel text-white text-sm py-1 px-3 rounded-full">
-            {getRoleDisplay(user.role)}
-          </div>
           <Button
-            variant="destructive" // Use destructive variant for red styling
-            // className is handled by the variant
+            variant="destructive"
             onClick={handleLogout}
           >
             Cerrar Sesión

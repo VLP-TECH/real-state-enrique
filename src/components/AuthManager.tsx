@@ -41,18 +41,12 @@ const AuthManager = () => {
           if (isAdmin && currentPath === '/dashboard') {
             expectedPath = '/dashboard/admin';
             description = 'Acceso no autorizado. Redirigiendo...';
-            toast({
-              title: 'Redirección',
-              description: description,
-            });
+            // Removed toast notification
             navigate(expectedPath, { replace: true });
           } else if (!isAdmin && currentPath !== '/dashboard') {
             expectedPath = '/dashboard';
              description = 'Acceso no autorizado. Redirigiendo...';
-            toast({
-              title: 'Redirección',
-              description: description,
-            });
+            // Removed toast notification
             navigate(expectedPath, { replace: true });
           }
         }

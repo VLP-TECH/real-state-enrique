@@ -79,7 +79,6 @@ const Dashboard: React.FC = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
 
-          // Fetch request count
           const { count: requestsCount } = await supabase
             .from('infoactivo')
             .select('*', { count: 'exact', head: true })
@@ -93,7 +92,7 @@ const Dashboard: React.FC = () => {
             fullName: profile.full_name || '',
             email: user.email || '',
             assetsCount: count || 0,
-            requestsCount: requestsCount || 0 // Use fetched count
+            requestsCount: requestsCount || 0
           });
           if (profile.admin) setIsAdmin(true);
         }
@@ -107,11 +106,6 @@ const Dashboard: React.FC = () => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast({
-          title: 'Acceso no autorizado',
-          description: 'Debes iniciar sesión para acceder al dashboard',
-          variant: 'destructive',
-        });
         navigate('/');
         return;
       }
@@ -168,17 +162,16 @@ const Dashboard: React.FC = () => {
     };
 
     fetchAllAssets();
-  }, []); // Keep dependencies empty to fetch only once
+  }, []);
 
-  // Fetch user's specific requests
   useEffect(() => {
     const fetchUserRequests = async () => {
-      if (userProfile?.id) { // Ensure we have the user ID
+      if (userProfile?.id) {
         const { data: requests, error } = await supabase
           .from('infoactivo')
-          .select('*') // Select all columns for the request
+          .select('*')
           .eq('user_id', userProfile.id)
-          .order('created_at', { ascending: false }); // Optional: order by creation date
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Error fetching user requests:", error);
@@ -188,17 +181,14 @@ const Dashboard: React.FC = () => {
             variant: "destructive",
           });
         } else {
-          // Map Supabase columns to InformationRequest type fields
           const formattedRequests: InformationRequest[] = (requests || []).map(req => ({
             id: req.id,
             assetId: req.activo_id,
-            requesterId: req.user_id, // Map user_id to requesterId
-            status: req.estado || 'pending', // Map estado to status
-            creado: req.created_at, // Map created_at to creado
-            updatedAt: req.updated_at || req.created_at, // Map updated_at (or fallback to created_at)
-            notes: req.mensaje, // Map mensaje to notes
-            // Optional fields like ndaLink etc. are not directly available in infoactivo,
-            // they would need to be fetched or handled differently if required later.
+            requesterId: req.user_id,
+            status: req.estado || 'pending',
+            creado: req.created_at,
+            updatedAt: req.updated_at || req.created_at,
+            notes: req.mensaje,
           }));
           setUserRequests(formattedRequests);
         }
@@ -206,17 +196,15 @@ const Dashboard: React.FC = () => {
     };
 
     fetchUserRequests();
-  }, [userProfile, toast]); // Re-run if userProfile changes
+  }, [userProfile, toast]);
 
   const handleRequestInfo = (asset: Asset) => {
     setSelectedAsset(asset);
     setIsRequestFormOpen(true);
   };
 
-  // Renamed and updated to increment count
   const handleRequestSuccess = () => {
     setIsRequestFormOpen(false);
-    // Re-fetch requests to update the list after submission
      if (userProfile?.id) {
         const fetchUserRequests = async () => {
             const { data: requests, error } = await supabase
@@ -236,7 +224,6 @@ const Dashboard: React.FC = () => {
                     notes: req.mensaje,
                  }));
                  setUserRequests(formattedRequests);
-                 // Also update the count in the profile
                  setUserProfile(prevProfile => {
                     if (!prevProfile) return null;
                     return { ...prevProfile, requestsCount: formattedRequests.length };
@@ -254,14 +241,12 @@ const Dashboard: React.FC = () => {
   const handleSignNda = async (requestId: string) => {
     console.log("Attempting to sign NDA for request:", requestId);
     try {
-      // Update Supabase: set estado to 'nda_received' and nda_firmado to true
       const { error } = await supabase
         .from('infoactivo')
-        .update({ estado: 'nda_received', nda_firmado: true }) // Assuming 'nda_firmado' column exists
+        .update({ estado: 'nda_received', nda_firmado: true })
         .eq('id', requestId);
 
       if (error) {
-        // Check if the error is due to the column not existing
         if (error.message.includes('column "nda_firmado" does not exist')) {
            console.warn("Column 'nda_firmado' does not exist in 'infoactivo'. Skipping update for this column.");
            // Attempt update without nda_firmado
@@ -269,23 +254,21 @@ const Dashboard: React.FC = () => {
              .from('infoactivo')
              .update({ estado: 'nda_received' })
              .eq('id', requestId);
-           if (fallbackError) throw fallbackError; // Throw if the fallback also fails
+           if (fallbackError) throw fallbackError;
         } else {
-          throw error; // Throw other errors
+          throw error;
         }
       }
 
-      // Update local state
       setUserRequests(prevRequests =>
         prevRequests.map(req =>
-          req.id === requestId ? { ...req, status: 'nda_received' } : req // Update status locally
+          req.id === requestId ? { ...req, status: 'nda_received' } : req
         )
       );
 
       toast({
         title: 'NDA Firmado (Simulado)',
         description: 'El estado de la solicitud se ha actualizado a NDA Recibido.',
-        // Add actual NDA signing/verification logic here
       });
 
     } catch (error: any) {
@@ -300,16 +283,14 @@ const Dashboard: React.FC = () => {
 
   const handleViewFiles = (requestId: string) => {
     console.log("Viewing files for request:", requestId);
-    // Placeholder for actual file viewing logic
     toast({ title: "Funcionalidad no implementada", description: "La visualización de archivos aún no está conectada." });
   };
 
   const getAssetById = (id: string) => {
-    // Look in both userAssets and allAssets
     return userAssets.find(asset => asset.id === id) || allAssets.find(asset => asset.id === id);
   };
 
-  const mockAssets = filteredAssets; // Keep using filteredAssets for discovery tab
+  const mockAssets = filteredAssets;
 
   if (!isAdmin && authChecked) {
     return (
@@ -512,7 +493,7 @@ const Dashboard: React.FC = () => {
                   asset={selectedAsset}
                   open={isRequestFormOpen}
                   onClose={() => setIsRequestFormOpen(false)}
-                  onSuccess={handleRequestSuccess} // Changed prop name
+                  onSuccess={handleRequestSuccess}
                   buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
                 />
               </TabsContent>
@@ -562,13 +543,12 @@ const Dashboard: React.FC = () => {
                           </TableHeader>
                           <TableBody>
                             {userRequests.map(request => {
-                              const asset = getAssetById(request.assetId); // Use updated getAssetById
+                              const asset = getAssetById(request.assetId);
                               return (
                                 <TableRow key={request.id}>
-                                  <TableCell className="font-medium text-xs">{request.id}</TableCell> {/* Use request ID */}
+                                  <TableCell className="font-medium text-xs">{request.id}</TableCell>
                                   <TableCell>
                                     <div className="flex flex-col">
-                                      {/* Display asset details if found, otherwise just the ID */}
                                       <span>ID: {request.assetId}</span>
                                       {asset && (
                                         <span className="text-xs text-estate-steel">
@@ -578,14 +558,12 @@ const Dashboard: React.FC = () => {
                                     </div>
                                   </TableCell>
                                   <TableCell>
-                                    {/* Use creado from the request object */}
                                     {safeDateParser(request.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}
                                   </TableCell>
                                   <TableCell>
-                                    <StatusBadge status={request.status} /> {/* Use status from request */}
+                                    <StatusBadge status={request.status} />
                                   </TableCell>
                                   <TableCell className="text-left">
-                                    {/* Conditional Actions based on status */}
                                     {request.status === 'approved' && (
                                       <span className="text-sm text-gray-500 italic">Esperando acción del administrador</span>
                                     )}

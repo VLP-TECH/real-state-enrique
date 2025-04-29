@@ -53,12 +53,7 @@ const AdminDashboard = () => {
       const { data: { user }, error } = await supabase.auth.getUser();
 
       if (!user) {
-        
-        toast({
-          title: 'Acceso no autorizado',
-          description: 'Debes iniciar sesión para acceder al dashboard',
-          variant: 'destructive',
-        });
+        // Removed the toast notification for unauthorized access
         navigate('/');
         return;
       }
