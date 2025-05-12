@@ -310,15 +310,25 @@ const AdminDashboard = () => {
 
     await supabase.auth.signOut();
 
-    const { error: restoreError } = await supabase.auth.setSession({
-      access_token: adminSession.access_token,
-      refresh_token: adminSession.refresh_token,
-    });
+    try {
+      const { error: restoreError } = await supabase.auth.setSession({
+        access_token: adminSession.access_token,
+        refresh_token: adminSession.refresh_token,
+      });
 
-    if (restoreError) {
+      if (restoreError) {
+        toast({
+          title: 'Error al restaurar sesión del admin',
+          description: restoreError.message,
+          variant: 'destructive',
+        });
+        setLoadingCrearCuenta(false);
+        return;
+      }
+    } catch (error: any) {
       toast({
         title: 'Error al restaurar sesión del admin',
-        description: restoreError.message,
+        description: error.message || 'Error desconocido al restaurar la sesión.',
         variant: 'destructive',
       });
       setLoadingCrearCuenta(false);

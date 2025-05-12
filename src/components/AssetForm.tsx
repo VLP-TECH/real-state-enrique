@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AssetFormData, AssetPurpose } from '@/utils/types'; 
+import { AssetFormData, AssetPurpose } from '@/utils/types';
 import { X, Upload, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/supabaseClient';
@@ -181,25 +181,27 @@ const categoriesData: Category[] = [
 
 interface AssetFormProps {
   onSubmit: (data: AssetFormData) => void;
+  userId: string;
+  userName: string;
 }
 
-const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
+const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JSX.Element => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null); 
   const [formData, setFormData] = useState<AssetFormData>({
     purpose: 'sale' as AssetPurpose,
     country: '',
     city: '',
     area: '',
     expectedReturn: undefined,
-    priceAmount: 0,
+    priceAmount: undefined,
     priceCurrency: 'USD',
     description: '',
     files: [],
     category: '',
     subcategory1: '',
     subcategory2: '',
+    type: 'asset',
   });
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -210,7 +212,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
     const initialize = async () => {
       try {
         const { error, count } = await supabase
-          .from('activos') 
+          .from('activos')
           .select('*', { count: 'exact', head: true });
 
         if (error) {
@@ -221,7 +223,6 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
             variant: "destructive",
           });
         } else {
-          
           console.log("Successfully connected to 'activos' table. Count:", count);
         }
       } catch (err) {
@@ -233,7 +234,6 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
         });
       }
 
-      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) {
         console.error("Error fetching user:", userError);
@@ -243,11 +243,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
           variant: "destructive",
         });
       } else if (user) {
-        setUserId(user.id);
-        console.log("User ID set:", user.id); 
+        console.log("User ID set:", user.id);
       } else {
         console.error("User not logged in");
-        
         toast({
           title: "Error de Autenticación",
           description: "Debes iniciar sesión para subir un activo.",
@@ -255,16 +253,18 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
         });
       }
     };
+
     initialize();
-  }, [toast]);
+  }, [toast, userId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
     if (type === 'number') {
+      const parsedValue = value.startsWith('0') && value.length > 1 ? value.substring(1) : value;
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0
+        [name]: parseFloat(parsedValue) || undefined
       });
     } else {
       setFormData({
@@ -279,8 +279,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
     setFormData({
       ...formData,
       category: value,
-      subcategory1: '', 
-      subcategory2: '', 
+      subcategory1: '',
+      subcategory2: '',
     });
     setAvailableSubcategories1(selectedCategory ? selectedCategory.subcategories1 : []);
 
@@ -348,25 +348,30 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
 
     setIsSubmitting(true);
 
-    const assetData = {
-      user_id: userId,
-      purpose: formData.purpose,
-      
-      country: formData.country,
-      city: formData.city,
-      area: formData.area || null,
-      expectedReturn: formData.expectedReturn,
-      priceAmount: formData.priceAmount,
-      priceCurrency: formData.priceCurrency,
-      description: formData.description,
-      category: formData.category,
-      subcategory1: formData.subcategory1,
-      subcategory2: formData.subcategory2,
-      url: "https://example.com/placeholder.pdf",
-      creado: new Date().toISOString(),
-    };
-
     try {
+      // Primero enviar archivos a n8n si hay
+      if (uploadedFiles.length > 0) {
+        await submitToN8n(userId, userName, formData, uploadedFiles);
+      }
+
+      // Luego insertar en Supabase
+      const assetData = {
+        user_id: userId,
+        purpose: formData.purpose,
+        type: formData.type,
+        country: formData.country,  // Corregido: estaba vacío
+        city: formData.city,        // Corregido: estaba vacío
+        area: formData.area || null,
+        expectedReturn: formData.expectedReturn,
+        priceAmount: formData.priceAmount,
+        priceCurrency: formData.priceCurrency,
+        description: formData.description,
+        category: formData.category,
+        subcategory1: formData.subcategory1,
+        subcategory2: formData.subcategory2,
+        url: 'https://example.com/default-url',
+      };
+
       const { data, error } = await supabase
         .from('activos')
         .insert([assetData])
@@ -382,42 +387,35 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
         description: "El activo ha sido registrado correctamente.",
       });
 
-      
+      // Reset form
       setFormData({
         purpose: 'sale' as AssetPurpose,
-        
         country: '',
         city: '',
         area: '',
         expectedReturn: undefined,
-        priceAmount: 0,
+        priceAmount: undefined,
         priceCurrency: 'USD',
         description: '',
-        files: [], 
+        files: [],
         category: '',
         subcategory1: '',
         subcategory2: '',
+        type: 'asset',
       });
-      setUploadedFiles([]); 
+      setUploadedFiles([]);
       setAvailableSubcategories1([]);
       setAvailableSubcategories2([]);
 
     } catch (error: any) {
-      console.error('Error inserting asset:', error);
-      let errorMessage = "Ocurrió un error al guardar el activo.";
-      if (error && error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (error && error.details) {
-         errorMessage += ` Detalles: ${error.details}`;
-      }
-      if (error && error.hint) {
-         errorMessage += ` Pista: ${error.hint}`;
-      }
+      console.error('Error:', error);
+      let errorMessage = "Ocurrió un error al procesar el activo.";
+      if (error?.message) errorMessage = error.message;
+      if (error?.details) errorMessage += ` Detalles: ${error.details}`;
+      if (error?.hint) errorMessage += ` Pista: ${error.hint}`;
 
       toast({
-        title: "Error al Crear Activo",
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -427,6 +425,54 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
   };
 
   const assetPurposes: AssetPurpose[] = ['sale', 'purchase', 'need'];
+
+  async function submitToN8n(
+    userIdProp: string, 
+    userNameProp: string,
+    formData: AssetFormData,
+    files: File[]
+  ) {
+    const form = new FormData();
+    
+    // Añadir datos del formulario
+    form.append("userId", userIdProp);
+    form.append("userName", userNameProp);
+    form.append("purpose", formData.purpose);
+    form.append("country", formData.country);
+    form.append("city", formData.city);
+    form.append("area", formData.area || "");
+    form.append("priceAmount", formData.priceAmount?.toString() || "");
+    form.append("priceCurrency", formData.priceCurrency);
+    form.append("description", formData.description);
+    form.append("category", formData.category);
+    form.append("subcategory1", formData.subcategory1);
+    form.append("subcategory2", formData.subcategory2);
+
+    // Añadir archivos con nombre
+    files.forEach(file => {
+      form.append("files", file, file.name);
+    });
+
+    try {
+      const response = await fetch("https://n8n-n8n.uhoyr2.easypanel.host/webhook-test/subir-activo", {
+        method: "POST",
+        body: form,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Success:", result);
+      toast({ title: "Archivos enviados correctamente a n8n" });
+      return result;
+    } catch (error) {
+      console.error("Error al enviar a n8n:", error);
+      throw error; // Re-lanzar el error para manejarlo en handleSubmit
+    }
+  }
+
   const currencies = ['USD', 'EUR', 'GBP', 'CHF'];
 
   const getAssetPurposeLabel = (purpose: AssetPurpose): string => {
@@ -434,7 +480,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
       case 'sale': return 'En Venta';
       case 'purchase': return 'Para Compra';
       case 'need': return 'Necesidad';
-      default: return purpose;
+      default: return '';
     }
   };
 
@@ -446,7 +492,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="purpose">Propósito del Activo</Label>
                 <Select
@@ -471,88 +517,93 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                 <Input
                   id="expectedReturn"
                   name="expectedReturn"
-                  type="number"
-                  step="0.1"
+                  type="text"
                   placeholder="ej. 7.5"
-                  value={formData.expectedReturn || ''}
+                  value={formData.expectedReturn === undefined ? '' : formData.expectedReturn}
                   onChange={handleChange}
+                  required
+                  onKeyPress={(event) => {
+                    if (!/[0-9.]/.test(event.key)) {
+                      event.preventDefault();
+                    }
+                  }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <div className="space-y-2">
-                 <Label htmlFor="category">Categoría</Label>
-                 <Select
-                   value={formData.category}
-                   onValueChange={handleCategoryChange}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder="Seleccionar categoría" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectGroup>
-                       <SelectLabel>Categorías</SelectLabel>
-                       {categoriesData.map(cat => (
-                         <SelectItem key={cat.name} value={cat.name}>
-                           {cat.name}
-                         </SelectItem>
-                       ))}
-                     </SelectGroup>
-                   </SelectContent>
-                 </Select>
-               </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoría</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Categorías</SelectLabel>
+                      {categoriesData.map(cat => (
+                        <SelectItem key={cat.name} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
 
-               <div className="space-y-2">
-                 <Label htmlFor="subcategory1">Subcategoría 1</Label>
-                 <Select
-                   value={formData.subcategory1}
-                   onValueChange={handleSubcategory1Change}
-                   disabled={!formData.category || availableSubcategories1.length === 0}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder="Seleccionar subcategoría 1" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectGroup>
-                       <SelectLabel>Subcategorías Nivel 1</SelectLabel>
-                       {availableSubcategories1.map(sub1 => (
-                         <SelectItem key={sub1.name} value={sub1.name}>
-                           {sub1.name}
-                         </SelectItem>
-                       ))}
-                     </SelectGroup>
-                   </SelectContent>
-                 </Select>
-               </div>
+              <div className="space-y-2">
+                <Label htmlFor="subcategory1">Subcategoría 1</Label>
+                <Select
+                  value={formData.subcategory1}
+                  onValueChange={handleSubcategory1Change}
+                  disabled={!formData.category || availableSubcategories1.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar subcategoría 1" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Subcategorías Nivel 1</SelectLabel>
+                      {availableSubcategories1.map(sub1 => (
+                        <SelectItem key={sub1.name} value={sub1.name}>
+                          {sub1.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
 
-               <div className="space-y-2">
-                 <Label htmlFor="subcategory2">Subcategoría 2</Label>
-                 <Select
-                   value={formData.subcategory2}
-                   onValueChange={handleSubcategory2Change}
-                   disabled={!formData.category || availableSubcategories2.length === 0}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder="Seleccionar subcategoría 2" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectGroup>
-                       <SelectLabel>Subcategorías Nivel 2</SelectLabel>
-                       {availableSubcategories2.map(sub2 => (
-                         <SelectItem key={sub2.name} value={sub2.name}>
-                           {sub2.name}
-                         </SelectItem>
-                       ))}
-                     </SelectGroup>
-                   </SelectContent>
-                 </Select>
-               </div>
-             </div>
+              <div className="space-y-2">
+                <Label htmlFor="subcategory2">Subcategoría 2</Label>
+                <Select
+                  value={formData.subcategory2}
+                  onValueChange={handleSubcategory2Change}
+                  disabled={!formData.category || availableSubcategories2.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar subcategoría 2" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Subcategorías Nivel 2</SelectLabel>
+                      {availableSubcategories2.map(sub2 => (
+                        <SelectItem key={sub2.name} value={sub2.name}>
+                          {sub2.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="country">País<span className="text-estate-error">*</span></Label>
+                <Label htmlFor="country">País</Label>
                 <Input
                   id="country"
                   name="country"
@@ -562,9 +613,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="city">Ciudad <span className="text-estate-error">*</span></Label>
+                <Label htmlFor="city">Ciudad</Label>
                 <Input
                   id="city"
                   name="city"
@@ -574,7 +625,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="area">Área/Zona (Opcional)</Label>
                 <Input
@@ -589,18 +640,23 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="priceAmount">Precio<span className="text-estate-error">*</span></Label>
+                <Label htmlFor="priceAmount">Precio</Label>
                 <Input
                   id="priceAmount"
                   name="priceAmount"
-                  type="number"
+                  type="text"
                   placeholder="Importe"
-                  value={formData.priceAmount || ''}
+                  value={formData.priceAmount || undefined}
                   onChange={handleChange}
                   required
+                  onKeyPress={(event) => {
+                    if (!/[0-9.]/.test(event.key)) {
+                      event.preventDefault();
+                    }
+                  }}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="priceCurrency">Moneda</Label>
                 <Select
@@ -644,9 +700,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                   <Input
                     id="file-upload"
                     type="file"
-                    multiple 
-                    className="hidden" 
-                    onChange={handleFileChange} 
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
                     accept=".pdf,image/*,video/*"
                   />
                 </label>
@@ -658,7 +714,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                   <div className="space-y-2">
                     {uploadedFiles.map((file, index) => (
                       <div
-                        key={`${file.name}-${index}`} 
+                        key={`${file.name}-${index}`}
                         className="flex items-center justify-between bg-estate-offwhite p-2 rounded"
                       >
                         <div className="flex items-center">
@@ -667,10 +723,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit }) => {
                             {file.name}
                           </span>
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
                           className="h-6 w-6"
                           onClick={() => removeFile(index)}
                         >

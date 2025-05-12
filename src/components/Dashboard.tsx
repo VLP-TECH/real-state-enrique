@@ -612,7 +612,15 @@ const Dashboard: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="new-asset" className="mt-16 md:mt-6 space-y-6">
-                <AssetForm onSubmit={handleAssetSubmit} />
+                {userProfile ? (
+                  <AssetForm
+                    onSubmit={handleAssetSubmit}
+                    userId={userProfile.id}
+                    userName={userProfile.fullName}
+                  />
+                ) : (
+                  <div>Loading...</div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

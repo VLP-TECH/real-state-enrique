@@ -7,6 +7,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/webhook': {
+        target: 'https://n8n-n8n.uhoyr2.easypanel.host',
+        changeOrigin: true,
+        secure: true,
+      },
+    }
   },
   plugins: [
     react(),

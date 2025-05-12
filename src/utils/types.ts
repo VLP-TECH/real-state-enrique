@@ -33,7 +33,7 @@ export interface Asset {
   country: string;
   city: string;
   area?: string;
-  expectedReturn?: number;
+  expectedReturn: number;
   priceAmount: number;
   priceCurrency: string;
   description?: string;
@@ -51,7 +51,7 @@ export interface AssetFormData {
   country: string;
   city: string;
   area?: string;
-  expectedReturn?: number;
+  expectedReturn: number;
   priceAmount: number;
   priceCurrency: string;
   description: string;
@@ -59,6 +59,7 @@ export interface AssetFormData {
   category?: string;
   subcategory1?: string;
   subcategory2?: string;
+  type: string;
 }
 
 export interface InformationRequest {
@@ -81,21 +82,6 @@ export interface RegistrationFormData {
   company: string;
   role: UserRole;
   message?: string;
-}
-
-export interface AssetFormData {
-  purpose: AssetPurpose;
-  country: string;
-  city: string;
-  area?: string;
-  expectedReturn?: number;
-  priceAmount: number;
-  priceCurrency: string;
-  description: string;
-  files?: File[];
-  category?: string;
-  subcategory1?: string;
-  subcategory2?: string;
 }
 
 export interface DashboardStats {
