@@ -447,6 +447,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
     form.append("category", formData.category);
     form.append("subcategory1", formData.subcategory1);
     form.append("subcategory2", formData.subcategory2);
+    form.append("type", formData.type);
 
     // Añadir archivos con nombre
     files.forEach(file => {
@@ -469,7 +470,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
       return result;
     } catch (error) {
       console.error("Error al enviar a n8n:", error);
-      throw error; // Re-lanzar el error para manejarlo en handleSubmit
+      throw error;
     }
   }
 
