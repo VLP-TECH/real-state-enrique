@@ -72,31 +72,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           setLoadingAdminCounts(false);
         }
       } else {
-        // Fetch user's assets to determine dynamic role
-        const { data: userAssets, error: assetsError } = await supabase
-          .from('activos')
-          .select('purpose')
-          .eq('user_id', user.id);
+        // For non-admin users, get role directly from their profile
+        const { data: userProfileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('su_rol') // Fetching 'su_rol' as per your feedback
+          .eq('user_id', user.id)
+          .single();
 
-        if (assetsError) {
-          console.error("Error fetching user assets for role determination:", assetsError);
-          setDisplayRole(getBaseRoleDisplay(user.role)); // Fallback to base role
-        } else if (userAssets && userAssets.length > 0) {
-          const purposes = userAssets.map(asset => asset.purpose);
-          const hasSale = purposes.includes('sale');
-          const hasPurchaseOrNeed = purposes.includes('purchase') || purposes.includes('need');
-
-          if (hasSale && hasPurchaseOrNeed) {
-            setDisplayRole('Mandatario de Compra/Venta');
-          } else if (hasSale) {
-            setDisplayRole('Mandatario de Venta');
-          } else if (hasPurchaseOrNeed) {
-            setDisplayRole('Mandatario de Compra');
-          } else {
-            setDisplayRole(getBaseRoleDisplay(user.role)); // Fallback if no clear mandatary role from assets
-          }
+        if (profileError) {
+          console.error("Error fetching user profile for role from 'profiles.su_rol':", profileError);
+          // Fallback to the role initially passed in the user prop if DB fetch fails
+          setDisplayRole(getBaseRoleDisplay(user.role)); 
+        } else if (userProfileData && userProfileData.su_rol) {
+          setDisplayRole(getBaseRoleDisplay(userProfileData.su_rol as UserRole));
         } else {
-          // No assets, use base role
+          // Fallback if profile is fetched but su_rol is not found, or profile itself not found
+          console.warn(`Profile 'su_rol' not found in DB for user ${user.id}. Falling back to user.role prop.`);
           setDisplayRole(getBaseRoleDisplay(user.role));
         }
       }
