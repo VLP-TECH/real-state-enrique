@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
 import UserProfile from './UserProfile';
-import { User } from '@/utils/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Asset, RequestStatus } from '@/utils/types'; // Import Asset type and RequestStatus
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { TabsContent, TabsList, Tabs, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,9 @@ import { Loader2 } from "lucide-react"
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import StatusBadge from './StatusBadge'; // Import StatusBadge
+import AssetList from './AssetList'; // Re-import AssetList for card view
+import { formatCurrency, safeDateParser } from '@/utils/formatters'; // Import formatters
+import { Eye, List, LayoutGrid } from 'lucide-react'; // Import Eye, List, LayoutGrid icons
 
 const generatePassword = () => {
   const length = 12;
@@ -40,13 +43,18 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [solicitudes, setSolicitudes] = useState<any[]>([]); 
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
-  const [infoRequests, setInfoRequests] = useState<any[]>([]); 
+  const [infoRequests, setInfoRequests] = useState<any[]>([]);
   const [loadingInfoRequests, setLoadingInfoRequests] = useState(true);
+  const [assets, setAssets] = useState<Asset[]>([]); // State for assets
+  const [loadingAssets, setLoadingAssets] = useState(true); // Loading state for assets
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [generatedPasswords, setGeneratedPasswords] = useState<Record<number, string>>({});
   const [openRequests, setOpenRequests] = useState<Record<number, boolean>>({});
   const [loadingCrearCuenta, setLoadingCrearCuenta] = useState(false);
+  const [adminViewMode, setAdminViewMode] = useState<'card' | 'list'>('list'); // Renamed for global scope
+  const [registroFilter, setRegistroFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('pending'); // Filter for registration requests
+  const [infoRequestFilter, setInfoRequestFilter] = useState<RequestStatus | 'all'>('all'); // Filter for info requests, RequestStatus is from types.ts
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -114,24 +122,36 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchSolicitudes = async () => {
+      setLoadingSolicitudes(true);
       try {
         const { data, error } = await supabase
           .from('solicitudes')
           .select('*')
-          .is('estado', null);
+          .order('creado', { ascending: false }); // Corrected to 'creado'
 
         if (error) throw error;
 
-        setSolicitudes(data);
+        setSolicitudes(data || []);
       } catch (error) {
         console.error('Error al obtener solicitudes:', error);
+        toast({
+          title: 'Error al Cargar Solicitudes de Registro',
+          description: (error as Error).message || 'Ocurrió un error desconocido.',
+          variant: 'destructive',
+        });
       } finally {
         setLoadingSolicitudes(false);
       }
     };
 
-    fetchSolicitudes();
-  }, [isAdmin]);
+    if (isAdmin) {
+      fetchSolicitudes();
+    } else {
+      // If not admin (or not yet determined), ensure loading stops and data is clear
+      setSolicitudes([]);
+      setLoadingSolicitudes(false);
+    }
+  }, [isAdmin, toast]);
 
   useEffect(() => {
     const fetchInfoRequests = async () => {
@@ -195,10 +215,38 @@ const AdminDashboard = () => {
       }
     };
 
-    if (isAdmin) { 
+    if (isAdmin) {
         fetchInfoRequests();
     }
-  }, [isAdmin, toast]); 
+  }, [isAdmin, toast]);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      if (!isAdmin) return;
+      setLoadingAssets(true);
+      try {
+        const { data, error } = await supabase
+          .from('activos')
+          .select('*');
+
+        if (error) throw error;
+        setAssets(data || []);
+      } catch (error: any) {
+        console.error('Error fetching assets:', error);
+        toast({
+          title: 'Error al Cargar Activos',
+          description: error.message || 'Ocurrió un error desconocido al cargar los activos.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoadingAssets(false);
+      }
+    };
+
+    if (isAdmin) {
+      fetchAssets();
+    }
+  }, [isAdmin, toast]);
 
 
   const handleAprobar = (id: number) => {
@@ -233,16 +281,19 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
+      // Update local state instead of filtering
       setSolicitudes((prevSolicitudes) =>
-        prevSolicitudes.filter((solicitud) => solicitud.id !== id)
+        prevSolicitudes.map((s) =>
+          s.id === id ? { ...s, estado: false } : s
+        )
       );
 
       toast({
-        title: 'Solicitud denegada',
-        description: 'La solicitud ha sido marcada como eliminada.',
-        variant: 'destructive',
+        title: 'Solicitud Denegada',
+        description: 'La solicitud ha sido marcada como denegada.',
+        // variant: 'destructive', // Keep it neutral or success-like for the action itself
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al denegar solicitud:', error);
       toast({
         title: 'Error',
@@ -374,9 +425,40 @@ const AdminDashboard = () => {
       description: `Se ha creado una cuenta para ${correo_electronico} y la solicitud ha sido aprobada.`,
     });
 
-    setSolicitudes((prev) => prev.filter((s) => s.id !== solicitudId));
+    // Placeholder & conceptual call for invoking Supabase Edge Function to send welcome email
+    console.log(`INFO: Aquí se invocaría la Supabase Edge Function 'send-welcome-email' para ${correo_electronico} con la contraseña generada.`);
+    // try {
+    //   const { data: functionData, error: functionError } = await supabase.functions.invoke('send-welcome-email', {
+    //     body: { email: correo_electronico, password: password, fullName: nombre_completo }
+    //   });
+    //   if (functionError) throw functionError;
+    //   toast({
+    //     title: 'Correo de Bienvenida Enviado',
+    //     description: `Se ha enviado un correo de bienvenida a ${correo_electronico}.`,
+    //   });
+    // } catch (error: any) {
+    //   console.error("Error invoking send-welcome-email function:", error);
+    //   toast({
+    //     title: 'Error al Enviar Correo',
+    //     description: `No se pudo enviar el correo de bienvenida a ${correo_electronico}. Por favor, envíalo manualmente. Error: ${error.message}`,
+    //     variant: 'destructive',
+    //     duration: 9000, // Longer duration for error messages
+    //   });
+    // }
+    toast({ // Current placeholder until Edge Function is implemented
+      title: 'Notificación: Envío de Correo (Simulado)',
+      description: `Un correo de bienvenida con la contraseña generada para ${correo_electronico} debería ser enviado mediante una Supabase Edge Function ('send-welcome-email').`,
+      duration: 7000,
+    });
 
-    navigate('/dashboard/admin');
+    // Update local state instead of filtering
+    setSolicitudes((prevSolicitudes) =>
+      prevSolicitudes.map((s) =>
+        s.id === solicitudId ? { ...s, estado: true, user_id: user.id } : s // Mark as approved and associate user_id if available
+      )
+    );
+    // No navigation needed if we are keeping them in the list
+    // navigate('/dashboard/admin'); 
     setLoadingCrearCuenta(false); // Ensure loading state is reset
   };
 
@@ -509,8 +591,6 @@ const AdminDashboard = () => {
       });
     }
   };
-  // --- End New Handlers ---
-
 
   const formatRelativeTime = (dateString: string) => {
     try {
@@ -544,252 +624,480 @@ const AdminDashboard = () => {
 
             <div className="lg:col-span-3">
               <Tabs defaultValue="admin" className="w-full">
-                
-                <TabsList className="inline-flex border-[#E1D48A]"> 
-                  <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                    Gestión de Registros
-                  </TabsTrigger>
-                  <TabsTrigger value="info-requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
-                    Solicitudes de Información
-                  </TabsTrigger>
-                </TabsList>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                  <TabsList className="grid w-full sm:w-auto grid-cols-1 sm:grid-cols-3 md:inline-flex border-[#E1D48A] mb-2 sm:mb-0">
+                    <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                      Gestión de Registros
+                    </TabsTrigger>
+                    <TabsTrigger value="info-requests" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                      Solicitudes de Información
+                    </TabsTrigger>
+                    <TabsTrigger value="asset-management" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
+                      Gestión de Activos
+                    </TabsTrigger>
+                  </TabsList>
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAdminViewMode('card')}
+                      className={adminViewMode === 'card' ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : ''}
+                      aria-label="Vista Tarjeta"
+                    >
+                      <LayoutGrid className="h-4 w-4 mr-2" />
+                      Tarjeta
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAdminViewMode('list')}
+                      className={adminViewMode === 'list' ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : ''}
+                      aria-label="Vista Lista"
+                    >
+                      <List className="h-4 w-4 mr-2" />
+                      Lista
+                    </Button>
+                  </div>
+                </div>
 
-                
-                <TabsContent value="admin" className="mt-16 md:mt-6 space-y-6">
+                {/* Gestión de Registros Tab */}
+                <TabsContent value="admin" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Gestión de Solicitudes de Registro</CardTitle>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>Gestión de Solicitudes de Registro</CardTitle>
+                        <div className="flex gap-2">
+                          {(['pending', 'approved', 'denied', 'all'] as const).map((filter) => (
+                            <Button
+                              key={filter}
+                              size="sm"
+                              variant={registroFilter === filter ? 'default' : 'outline'}
+                              onClick={() => setRegistroFilter(filter)}
+                              className={registroFilter === filter ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}
+                            >
+                              {filter === 'pending' && 'Pendientes'}
+                              {filter === 'approved' && 'Aprobadas'}
+                              {filter === 'denied' && 'Denegadas'}
+                              {filter === 'all' && 'Todas'}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {loadingSolicitudes ? (
                         <div className="flex justify-center items-center p-4">
-                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
+                          <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
                         </div>
-                      ) : solicitudes.length === 0 ? (
-                        <p>No hay solicitudes de registro pendientes.</p>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              
-                              <TableRow><TableHead>Nombre</TableHead><TableHead>Email</TableHead><TableHead>Teléfono</TableHead><TableHead>Empresa</TableHead><TableHead>Rol Solicitado</TableHead><TableHead>Mensaje Registro</TableHead><TableHead className="text-left">Acciones Registro</TableHead></TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              
-                              {solicitudes.flatMap((solicitud) => {
-                                const isOpen = openRequests[solicitud.id];
-                                const generatedPassword = generatedPasswords[solicitud.id] || '';
-                                const rows = [];
+                      ) : (() => {
+                        const filteredSolicitudes = solicitudes.filter(s => {
+                          if (registroFilter === 'all') return true;
+                          if (registroFilter === 'pending') return s.estado === null;
+                          if (registroFilter === 'approved') return s.estado === true;
+                          if (registroFilter === 'denied') return s.estado === false;
+                          return true;
+                        });
 
-                                
-                                rows.push(
-                                  <TableRow key={solicitud.id} style={{ borderBottomWidth: isOpen ? 0 : undefined }}>
-                                    <TableCell className="font-medium">{solicitud.nombre_completo}</TableCell>
-                                    <TableCell>{solicitud.correo_electronico}</TableCell>
-                                    <TableCell>{solicitud.numero_telefono || '-'}</TableCell>
-                                    <TableCell>{solicitud.empresa || '-'}</TableCell>
-                                    <TableCell>{mapRolLegible(solicitud.su_rol)}</TableCell>
-                                    <TableCell className="max-w-[200px] truncate">{solicitud.mensaje || '-'}</TableCell>
-                                    <TableCell className="text-left">
-                                      <div className="flex gap-2">
-                                        <Button
-                                          aria-label={openRequests[solicitud.id] ? 'Cancelar aprobación' : 'Aprobar solicitud'}
-                                          size="sm"
-                                          variant="outline" 
-                                          onClick={() => handleAprobar(solicitud.id)}
-                                          className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white" 
-                                        >
-                                          {openRequests[solicitud.id] ? 'Cancelar' : 'Aprobar'}
-                                        </Button>
-                                        <Button
-                                          aria-label="Denegar solicitud"
-                                          size="sm"
-                                          variant="outline" // Change variant
-                                          onClick={() => handleDenegar(solicitud.id)}
-                                          className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white" // Add custom classes
-                                        >
-                                          Denegar
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-
-                                
-                                if (isOpen) {
+                        if (filteredSolicitudes.length === 0) {
+                          return <p>No hay solicitudes de registro que coincidan con el filtro.</p>;
+                        }
+                        
+                        return adminViewMode === 'list' ? (
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Nombre</TableHead>
+                                  <TableHead>Email</TableHead>
+                                  <TableHead>Rol Solicitado</TableHead>
+                                  <TableHead>Estado</TableHead>
+                                  <TableHead className="text-left">Acciones</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {filteredSolicitudes.flatMap((solicitud) => {
+                                  const isOpen = openRequests[solicitud.id];
+                                  const generatedPassword = generatedPasswords[solicitud.id] || '';
+                                  const rows = [];
                                   rows.push(
-                                    <TableRow key={`${solicitud.id}-details`} className="bg-gray-50">
-                                      <TableCell colSpan={7} className="p-4">
-                                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                                              <div className="flex items-center border rounded">
-                                                <input
-                                                  type="text"
-                                                  placeholder="Generar contraseña"
-                                                  className="p-2 rounded-l focus:outline-none focus:ring-1 focus:ring-[#E1D48A]"
-                                                  value={generatedPassword}
-                                                  readOnly
-                                                  aria-label="Contraseña generada"
-                                                />
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  onClick={() => handleCopyToClipboard(generatedPassword)}
-                                                  disabled={!generatedPassword}
-                                                  className="rounded-l-none"
-                                                  aria-label="Copiar contraseña"
-                                                >
-                                                  <Copy className="h-4 w-4" />
-                                                </Button>
-                                              </div>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => handleGenerarPassword(solicitud.id)}
-                                                aria-label="Generar nueva contraseña"
-                                              >
-                                                Generar
-                                              </Button>
-                                            </div>
+                                    <TableRow key={solicitud.id} style={{ borderBottomWidth: (isOpen && solicitud.estado === null) ? 0 : undefined }}>
+                                      <TableCell className="font-medium">{solicitud.nombre_completo}</TableCell>
+                                      <TableCell>{solicitud.correo_electronico}</TableCell>
+                                      <TableCell>{mapRolLegible(solicitud.su_rol)}</TableCell>
+                                      <TableCell>
+                                        <StatusBadge 
+                                          status={solicitud.estado === null ? 'pending' : solicitud.estado === true ? 'approved' : 'rejected'} 
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-left">
+                                        {solicitud.estado === null && ( // Only show actions for pending
+                                          <div className="flex gap-2">
                                             <Button
-                                              size="sm"
-                                              variant="default"
-                                              onClick={() => handleCrearCuenta(solicitud.id, setLoadingCrearCuenta)}
-                                              disabled={!generatedPassword || loadingCrearCuenta}
-                                              className="bg-green-600 hover:bg-green-700"
-                                              aria-label="Crear cuenta de usuario"
+                                              aria-label={isOpen ? 'Cancelar aprobación' : 'Aprobar solicitud'}
+                                              size="sm" variant="outline" onClick={() => handleAprobar(solicitud.id)}
+                                              className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white"
                                             >
-                                              {loadingCrearCuenta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                              Crear Cuenta
-                                          </Button>
-                                        </div>
+                                              {isOpen ? 'Cancelar' : 'Aprobar'}
+                                            </Button>
+                                            <Button
+                                              aria-label="Denegar solicitud" size="sm" variant="outline"
+                                              onClick={() => handleDenegar(solicitud.id)}
+                                              className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white"
+                                            >
+                                              Denegar
+                                            </Button>
+                                          </div>
+                                        )}
+                                        {solicitud.estado === true && <span className="text-green-600">Aprobada</span>}
+                                        {solicitud.estado === false && <span className="text-red-600">Denegada</span>}
                                       </TableCell>
                                     </TableRow>
                                   );
-                                }
-                                
-                                return rows; 
-                              })}
-                            </TableBody>
-                          </Table>
+                                  if (isOpen && solicitud.estado === null) { // Only show details for pending and open
+                                    rows.push(
+                                      <TableRow key={`${solicitud.id}-details`} className="bg-gray-50">
+                                        <TableCell colSpan={5} className="p-4"> {/* Adjusted colSpan */}
+                                          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                                            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                                              <div className="flex items-center border rounded">
+                                                <input type="text" placeholder="Generar contraseña"
+                                                  className="p-2 rounded-l focus:outline-none focus:ring-1 focus:ring-[#E1D48A]"
+                                                  value={generatedPassword} readOnly aria-label="Contraseña generada" />
+                                                <Button size="icon" variant="ghost" onClick={() => handleCopyToClipboard(generatedPassword)}
+                                                  disabled={!generatedPassword} className="rounded-l-none" aria-label="Copiar contraseña">
+                                                  <Copy className="h-4 w-4" />
+                                                </Button>
+                                              </div>
+                                              <Button size="sm" variant="outline" onClick={() => handleGenerarPassword(solicitud.id)} aria-label="Generar nueva contraseña">
+                                                Generar
+                                              </Button>
+                                            </div>
+                                            <Button size="sm" variant="default" onClick={() => handleCrearCuenta(solicitud.id, setLoadingCrearCuenta)}
+                                              disabled={!generatedPassword || loadingCrearCuenta} className="bg-green-600 hover:bg-green-700"
+                                              aria-label="Crear cuenta de usuario">
+                                              {loadingCrearCuenta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                              Crear Cuenta
+                                            </Button>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
+                                  return rows;
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : ( // adminViewMode === 'card' for "Gestión de Registros"
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredSolicitudes.map((solicitud) => (
+                              <Card key={solicitud.id} className="flex flex-col">
+                                <CardHeader>
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <CardTitle className="text-base">{solicitud.nombre_completo}</CardTitle>
+                                      <p className="text-xs text-gray-500">{solicitud.correo_electronico}</p>
+                                    </div>
+                                    <StatusBadge status={solicitud.estado === null ? 'pending' : solicitud.estado === true ? 'approved' : 'rejected'} />
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-2">
+                                  <p className="text-sm"><strong>Rol:</strong> {mapRolLegible(solicitud.su_rol)}</p>
+                                  {solicitud.empresa && <p className="text-sm"><strong>Empresa:</strong> {solicitud.empresa}</p>}
+                                  {solicitud.numero_telefono && <p className="text-sm"><strong>Teléfono:</strong> {solicitud.numero_telefono}</p>}
+                                  {solicitud.mensaje && <p className="text-sm truncate" title={solicitud.mensaje}><strong>Mensaje:</strong> {solicitud.mensaje}</p>}
+                                </CardContent>
+                                {solicitud.estado === null && ( // Only show actions for pending
+                                  <CardFooter className="flex gap-2 justify-end pt-4">
+                                    <Button
+                                      aria-label={openRequests[solicitud.id] ? 'Cancelar aprobación' : 'Aprobar solicitud'}
+                                      size="sm" variant="outline" onClick={() => handleAprobar(solicitud.id)}
+                                      className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white"
+                                    >
+                                      {openRequests[solicitud.id] ? 'Cancelar' : 'Aprobar'}
+                                    </Button>
+                                    <Button
+                                      aria-label="Denegar solicitud" size="sm" variant="outline"
+                                      onClick={() => handleDenegar(solicitud.id)}
+                                      className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white"
+                                    >
+                                      Denegar
+                                    </Button>
+                                  </CardFooter>
+                                )}
+                                {openRequests[solicitud.id] && solicitud.estado === null && ( // Only show details for pending and open
+                                  <div className="p-4 border-t bg-gray-50">
+                                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                                        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                                          <div className="flex items-center border rounded">
+                                            <input type="text" placeholder="Generar contraseña"
+                                              className="p-2 rounded-l focus:outline-none focus:ring-1 focus:ring-[#E1D48A]"
+                                              value={generatedPasswords[solicitud.id] || ''} readOnly aria-label="Contraseña generada" />
+                                            <Button size="icon" variant="ghost" onClick={() => handleCopyToClipboard(generatedPasswords[solicitud.id] || '')}
+                                              disabled={!generatedPasswords[solicitud.id]} className="rounded-l-none" aria-label="Copiar contraseña">
+                                              <Copy className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                          <Button size="sm" variant="outline" onClick={() => handleGenerarPassword(solicitud.id)} aria-label="Generar nueva contraseña">
+                                            Generar
+                                          </Button>
+                                        </div>
+                                        <Button size="sm" variant="default" onClick={() => handleCrearCuenta(solicitud.id, setLoadingCrearCuenta)}
+                                          disabled={!generatedPasswords[solicitud.id] || loadingCrearCuenta} className="bg-green-600 hover:bg-green-700"
+                                          aria-label="Crear cuenta de usuario">
+                                          {loadingCrearCuenta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                          Crear Cuenta
+                                        </Button>
+                                      </div>
+                                  </div>
+                                )}
+                              </Card>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Solicitudes de Información Tab */}
+                <TabsContent value="info-requests" className="mt-6 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>Solicitudes de Información de Activos</CardTitle>
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {(['all', 'pending', 'approved', 'rejected', 'nda_requested', 'nda_received', 'information_shared'] as const).map((filterValue: RequestStatus | 'all') => (
+                            <Button
+                              key={filterValue}
+                              size="sm"
+                              variant={infoRequestFilter === filterValue ? 'default' : 'outline'}
+                              onClick={() => setInfoRequestFilter(filterValue)}
+                              className={`text-xs px-2 py-1 ${infoRequestFilter === filterValue ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}`}
+                            >
+                              {filterValue === 'all' && 'Todas'}
+                              {filterValue === 'pending' && 'Pendientes'}
+                              {filterValue === 'approved' && 'Aprobadas'}
+                              {filterValue === 'rejected' && 'Rechazadas'}
+                              {filterValue === 'nda_requested' && 'NDA Solicitado'}
+                              {filterValue === 'nda_received' && 'NDA Recibido'}
+                              {filterValue === 'information_shared' && 'Info Compartida'}
+                            </Button>
+                          ))}
                         </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingInfoRequests ? (
+                        <div className="flex justify-center items-center p-4">
+                          <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
+                        </div>
+                      ) : (
+                        (() => {
+                          const filteredInfoRequests = infoRequests.filter(req => {
+                            if (infoRequestFilter === 'all') return true;
+                            return (req.estado || 'pending') === infoRequestFilter;
+                          });
+
+                          if (filteredInfoRequests.length === 0) {
+                            return <p>No hay solicitudes de información que coincidan con el filtro.</p>;
+                          }
+
+                          if (adminViewMode === 'list') {
+                            return (
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Usuario (ID)</TableHead>
+                                      <TableHead>Activo (ID/Cat)</TableHead>
+                                      <TableHead>Ubicación Activo</TableHead>
+                                      <TableHead>Mensaje Solicitud</TableHead>
+                                      <TableHead>Fecha Solicitud</TableHead>
+                                      <TableHead>Estado</TableHead>
+                                      <TableHead className="text-left">Acciones</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {filteredInfoRequests.map((req) => (
+                                      <TableRow key={req.id}>
+                                        <TableCell className="font-medium text-xs text-gray-600" title={req.user_id}>{req.user_id?.substring(0, 8) || 'N/A'}...</TableCell>
+                                        <TableCell>
+                                          <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500 truncate" title={req.activo_id}>ID: {req.activo_id.substring(0, 8)}...</span>
+                                            <span>{req.activos?.category || 'N/A'}</span>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>{req.activos ? `${req.activos.city}, ${req.activos.country}` : 'N/A'}</TableCell>
+                                        <TableCell className="max-w-[250px] truncate" title={req.mensaje || ''}>{req.mensaje || '-'}</TableCell>
+                                        <TableCell>{formatRelativeTime(req.created_at)}</TableCell>
+                                        <TableCell><StatusBadge status={req.estado || 'pending'} /></TableCell>
+                                        <TableCell className="text-left">
+                                          {req.estado === 'pending' ? (
+                                            <div className="flex gap-2">
+                                              <Button size="sm" variant="outline" onClick={() => handleApproveInfoRequest(req.id)}
+                                                className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white" aria-label="Aprobar solicitud de información">
+                                                Aprobar
+                                              </Button>
+                                              <Button size="sm" variant="outline" onClick={() => handleDenyInfoRequest(req.id)}
+                                                className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white" aria-label="Denegar solicitud de información">
+                                                Denegar
+                                              </Button>
+                                            </div>
+                                          ) : req.estado === 'rejected' ? (
+                                            <span className="text-sm text-red-600 font-medium">Solicitud rechazada</span>
+                                          ) : req.estado === 'approved' ? (
+                                            <Button size="sm" variant="outline" onClick={() => handleSendNda(req.id)}
+                                              className="border-blue-500 text-blue-700 hover:bg-blue-600 hover:text-white px-2 py-1" aria-label="Enviar NDA">
+                                              <Send className="h-4 w-4 mr-1" /> Enviar Documentación de Confidencialidad
+                                            </Button>
+                                          ) : req.estado === 'nda_requested' ? (
+                                            <span className="text-sm text-gray-500 italic">Esperando acción del usuario</span>
+                                          ) : req.estado === 'nda_received' ? (
+                                            <Button size="sm" variant="outline" onClick={() => handleShareInformation(req.id)}
+                                              className="border-purple-500 text-purple-700 hover:bg-purple-600 hover:text-white px-2 py-1" aria-label="Compartir Información">
+                                              <Share2 className="h-4 w-4 mr-1" /> Enviar Documentación del Activo
+                                            </Button>
+                                          ) : req.estado === 'information_shared' ? (
+                                            <span className="text-sm text-green-600 font-medium"></span>
+                                          ) : (
+                                            <span className="text-sm text-gray-500 italic">Acción realizada</span>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            );
+                          } else { // adminViewMode === 'card'
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredInfoRequests.map((req) => (
+                                  <Card key={req.id} className="flex flex-col">
+                                    <CardHeader>
+                                      <CardTitle className="text-sm">Solicitud de: <span className="font-normal text-xs text-gray-600" title={req.user_id}>{req.user_id?.substring(0,8) || 'N/A'}...</span></CardTitle>
+                                      <p className="text-xs text-gray-500">Activo ID: <span title={req.activo_id}>{req.activo_id.substring(0,8)}...</span> ({req.activos?.category || 'N/A'})</p>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow space-y-1">
+                                      <p className="text-xs"><strong>Ubicación:</strong> {req.activos ? `${req.activos.city}, ${req.activos.country}` : 'N/A'}</p>
+                                      <p className="text-xs"><strong>Fecha:</strong> {formatRelativeTime(req.created_at)}</p>
+                                      <p className="text-xs truncate" title={req.mensaje || ''}><strong>Mensaje:</strong> {req.mensaje || '-'}</p>
+                                      <div className="flex items-center"><strong>Estado:</strong> <StatusBadge status={req.estado || 'pending'} /></div>
+                                    </CardContent>
+                                    <CardFooter className="flex flex-wrap gap-2 justify-end pt-2">
+                                      {req.estado === 'pending' && (
+                                        <>
+                                          <Button size="sm" variant="outline" onClick={() => handleApproveInfoRequest(req.id)} className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white text-xs px-2 py-1" aria-label="Aprobar">Aprobar</Button>
+                                          <Button size="sm" variant="outline" onClick={() => handleDenyInfoRequest(req.id)} className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white text-xs px-2 py-1" aria-label="Denegar">Denegar</Button>
+                                        </>
+                                      )}
+                                  {req.estado === 'approved' && (
+                                    <Button size="sm" variant="outline" onClick={() => handleSendNda(req.id)} className="border-blue-500 text-blue-700 hover:bg-blue-600 hover:text-white text-xs px-2 py-1" aria-label="Enviar NDA"><Send className="h-4 w-4 mr-1" />Enviar NDA</Button>
+                                  )}
+                                  {req.estado === 'nda_received' && (
+                                    <Button size="sm" variant="outline" onClick={() => handleShareInformation(req.id)} className="border-purple-500 text-purple-700 hover:bg-purple-600 hover:text-white text-xs px-2 py-1" aria-label="Compartir Info"><Share2 className="h-4 w-4 mr-1" />Compartir Info</Button>
+                                  )}
+                                  {(req.estado === 'rejected' || req.estado === 'nda_requested' || req.estado === 'information_shared') && (
+                                        <span className="text-xs text-gray-500 italic">
+                                          {req.estado === 'rejected' && 'Solicitud rechazada'}
+                                          {req.estado === 'nda_requested' && 'Esperando acción del usuario'}
+                                          {req.estado === 'information_shared' && 'Información compartida'}
+                                        </span>
+                                      )}
+                                    </CardFooter>
+                                  </Card>
+                                ))}
+                              </div>
+                            );
+                          }
+                        })() // Removed extra parenthesis here that might have caused syntax error
                       )}
                     </CardContent>
                   </Card>
                 </TabsContent>
 
-                
-                <TabsContent value="info-requests" className="mt-16 md:mt-6 space-y-6">
-                   <Card>
-                     <CardHeader>
-                       <CardTitle>Solicitudes de Información de Activos</CardTitle>
-                     </CardHeader>
-                     <CardContent>
-                       {loadingInfoRequests ? (
-                         <div className="flex justify-center items-center p-4">
-                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
-                         </div>
-                       ) : infoRequests.length === 0 ? (
-                         <p>No hay solicitudes de información disponibles.</p>
-                       ) : (
-                         <div className="overflow-x-auto">
-                           <Table>
-                             <TableHeader>
-                               <TableRow>
-                                 <TableHead>Usuario (ID)</TableHead>
-                                 <TableHead>Activo (ID/Cat)</TableHead>
-                                 <TableHead>Ubicación Activo</TableHead>
-                                 <TableHead>Mensaje Solicitud</TableHead>
-                                 <TableHead>Fecha Solicitud</TableHead>
-                                 <TableHead>Estado</TableHead> {/* Add Estado column header */}
-                                 <TableHead className="text-left">Acciones</TableHead> {/* Add Acciones column header */}
-                               </TableRow>
-                             </TableHeader>
-                             <TableBody>
-                               {infoRequests.map((req) => (
-                              <TableRow key={req.id}>
-                                <TableCell className="font-medium text-xs text-gray-600" title={req.user_id}>{req.user_id?.substring(0, 8) || 'N/A'}...</TableCell>
-                                <TableCell>
-                                  <div className="flex flex-col">
-                                     <span className="text-xs text-gray-500 truncate" title={req.activo_id}>ID: {req.activo_id.substring(0, 8)}...</span>
-                                        <span>{req.activos?.category || 'N/A'}</span>
-                                     </div>
-                                   </TableCell>
-                                   <TableCell>{req.activos ? `${req.activos.city}, ${req.activos.country}` : 'N/A'}</TableCell>
-                                   <TableCell className="max-w-[250px] truncate" title={req.mensaje || ''}>{req.mensaje || '-'}</TableCell>
-                                   <TableCell>{formatRelativeTime(req.created_at)}</TableCell>
-                                   <TableCell>
-                                     {/* Display status using StatusBadge */}
-                                     <StatusBadge status={req.estado || 'pending'} />
-                                   </TableCell>
-                                   <TableCell className="text-left">
-                                     {/* Conditional Actions */}
-                                     {req.estado === 'pending' ? (
-                                       <div className="flex gap-2">
-                                         <Button
-                                           size="sm"
-                                           variant="outline" // Keep outline for consistency with registration 'Aprobar'
-                                           onClick={() => handleApproveInfoRequest(req.id)}
-                                           className="border-green-500 text-green-700 hover:bg-green-600 hover:text-white" // Match registration 'Aprobar' style
-                                           aria-label="Aprobar solicitud de información"
-                                         >
-                                           Aprobar
-                                         </Button>
-                                         <Button
-                                           size="sm"
-                                           variant="outline" // Change variant
-                                           onClick={() => handleDenyInfoRequest(req.id)}
-                                           className="border-red-500 text-red-700 hover:bg-red-600 hover:text-white" // Add custom classes
-                                           aria-label="Denegar solicitud de información"
-                                         >
-                                           Denegar
-                                         </Button>
-                                       </div>
-                                     ) : req.estado === 'rejected' ? (
-                                       // Display specific message for rejected status
-                                       <span className="text-sm text-red-600 font-medium">Solicitud rechazada</span>
-                                     ) : req.estado === 'approved' ? (
-                                       // Display "Enviar NDA" button for approved status in Admin view
-                                       <Button
-                                         size="sm"
-                                         variant="outline"
-                                         onClick={() => handleSendNda(req.id)} // Correctly call handleSendNda
-                                         className="border-blue-500 text-blue-700 hover:bg-blue-600 hover:text-white px-2 py-1" // Darker hover bg, white text
-                                         aria-label="Enviar NDA"
-                                       >
-                                         <Send className="h-4 w-4 mr-1" /> Enviar Documentación de Confidencialidad
-                                       </Button>
-                                     ) : req.estado === 'nda_requested' ? (
-                                        // Display message when NDA has been requested/sent by admin
-                                        <span className="text-sm text-gray-500 italic">Esperando acción del usuario</span>
-                                     ) : req.estado === 'nda_received' ? (
-                                        // Display "Compartir Información" button when NDA is received
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => handleShareInformation(req.id)}
-                                          className="border-purple-500 text-purple-700 hover:bg-purple-600 hover:text-white px-2 py-1" // Darker hover bg, white text
-                                          aria-label="Compartir Información"
-                                        >
-                                          <Share2 className="h-4 w-4 mr-1" /> Enviar Documentación del Activo
-                                        </Button>
-                                     ) : req.estado === 'information_shared' ? (
-                                        // Display message after information has been shared
-                                        <span className="text-sm text-green-600 font-medium"></span>
-                                     ) : (
-                                       // Default message for other statuses
-                                       <span className="text-sm text-gray-500 italic">Acción realizada</span>
-                                     )}
-                                   </TableCell>
-                                 </TableRow>
-                               ))}
-                             </TableBody>
-                           </Table>
-                         </div>
-                       )}
-                     </CardContent>
-                   </Card>
-                 </TabsContent>
+                {/* Gestión de Activos Tab */}
+                <TabsContent value="asset-management" className="mt-6 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Listado de Activos</CardTitle>
+                      {/* View switcher buttons removed from here, now global */}
+                    </CardHeader>
+                    <CardContent>
+                      {loadingAssets ? (
+                        <div className="flex justify-center items-center p-4">
+                          <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
+                        </div>
+                      ) : assets.length === 0 ? (
+                        <p>No hay activos disponibles.</p>
+                      ) : adminViewMode === 'list' ? ( // Use global adminViewMode
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead>Subcategoría 1</TableHead>
+                                <TableHead>Subcategoría 2</TableHead>
+                                <TableHead>Ciudad</TableHead>
+                                <TableHead>País</TableHead>
+                                <TableHead>Precio</TableHead>
+                                <TableHead>Retorno Esperado</TableHead>
+                                <TableHead>Fecha Creación</TableHead>
+                                <TableHead>Acciones</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {assets.map((asset) => (
+                                <TableRow key={asset.id}>
+                                  <TableCell className="text-xs" title={asset.id}>{asset.id.substring(0, 8)}...</TableCell>
+                                  <TableCell>{asset.category}</TableCell>
+                                  <TableCell>{asset.subcategory1 || '-'}</TableCell>
+                                  <TableCell>{asset.subcategory2 || '-'}</TableCell>
+                                  <TableCell>{asset.city}</TableCell>
+                                  <TableCell>{asset.country}</TableCell>
+                                  <TableCell>{formatCurrency(asset.priceAmount, asset.priceCurrency)}</TableCell>
+                                  <TableCell>{asset.expectedReturn ? `${asset.expectedReturn}%` : '-'}</TableCell>
+                                  <TableCell>{safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        console.log(`Admin viewing details for asset: ${asset.id}`);
+                                        toast({
+                                          title: 'Detalles del Activo',
+                                          description: `Visualizando detalles para el activo ID: ${asset.id} (acción no implementada completamente).`,
+                                        });
+                                      }}
+                                      aria-label="Ver detalles del activo"
+                                    >
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      Ver
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ) : ( // adminViewMode === 'card'
+                        <AssetList
+                          assets={assets}
+                          onRequestInfo={(assetId) => {
+                            console.log(`Admin requesting info for asset: ${assetId}`);
+                            toast({
+                              title: 'Información de Activo',
+                              description: `Visualizando detalles para el activo ID: ${assetId} (acción no implementada completamente).`,
+                            });
+                          }}
+                          buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
               </Tabs>
             </div>
           </div>
