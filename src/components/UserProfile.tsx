@@ -22,51 +22,89 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   const [totalInfoRequestsCount, setTotalInfoRequestsCount] = useState<number | null>(null);
   const [totalRegistrationRequestsCount, setTotalRegistrationRequestsCount] = useState<number | null>(null);
   const [loadingAdminCounts, setLoadingAdminCounts] = useState<boolean>(false);
+  const [displayRole, setDisplayRole] = useState<string>('');
+  const [loadingRole, setLoadingRole] = useState<boolean>(true);
+
+  const getBaseRoleDisplay = (role: UserRole): string => {
+    switch (role) {
+      case 'seller_mandatary':
+        return 'Mandatario de Venta';
+      case 'buyer_mandatary':
+        return 'Mandatario de Compra';
+      case 'investor':
+        return 'Inversor / Family Office';
+      case 'admin':
+        return 'Administrador';
+      default:
+        return role;
+    }
+  };
 
   useEffect(() => {
-    const fetchAdminCounts = async () => {
-      if (user && user.admin) {
+    const determineDisplayRole = async () => {
+      if (!user) {
+        setLoadingRole(false);
+        return;
+      }
+
+      setLoadingRole(true);
+      if (user.admin) {
+        setDisplayRole('Administrador');
         setLoadingAdminCounts(true);
         try {
-          // Fetch total assets
-          const { count: assetsCount, error: assetsError } = await supabase
-            .from('activos')
-            .select('*', { count: 'exact', head: true });
+          const { count: assetsCount, error: assetsError } = await supabase.from('activos').select('*', { count: 'exact', head: true });
           if (assetsError) throw assetsError;
           setTotalAssetsCount(assetsCount);
 
-          // Fetch total info requests
-          const { count: infoRequestsCount, error: infoRequestsError } = await supabase
-            .from('infoactivo')
-            .select('*', { count: 'exact', head: true });
+          const { count: infoRequestsCount, error: infoRequestsError } = await supabase.from('infoactivo').select('*', { count: 'exact', head: true });
           if (infoRequestsError) throw infoRequestsError;
           setTotalInfoRequestsCount(infoRequestsCount);
 
-          // Fetch total registration requests (pending)
-          const { count: registrationRequestsCount, error: registrationRequestsError } = await supabase
-            .from('solicitudes')
-            .select('*', { count: 'exact', head: true })
-            .is('estado', null); // Assuming pending requests have estado as null
+          const { count: registrationRequestsCount, error: registrationRequestsError } = await supabase.from('solicitudes').select('*', { count: 'exact', head: true }).is('estado', null);
           if (registrationRequestsError) throw registrationRequestsError;
           setTotalRegistrationRequestsCount(registrationRequestsCount);
-
         } catch (error: any) {
           console.error("Error fetching admin counts:", error);
-          toast({
-            title: "Error al cargar contadores de admin",
-            description: error.message || "No se pudieron cargar los totales.",
-            variant: "destructive",
-          });
+          toast({ title: "Error al cargar contadores de admin", description: error.message || "No se pudieron cargar los totales.", variant: "destructive" });
         } finally {
           setLoadingAdminCounts(false);
         }
+      } else {
+        // Fetch user's assets to determine dynamic role
+        const { data: userAssets, error: assetsError } = await supabase
+          .from('activos')
+          .select('purpose')
+          .eq('user_id', user.id);
+
+        if (assetsError) {
+          console.error("Error fetching user assets for role determination:", assetsError);
+          setDisplayRole(getBaseRoleDisplay(user.role)); // Fallback to base role
+        } else if (userAssets && userAssets.length > 0) {
+          const purposes = userAssets.map(asset => asset.purpose);
+          const hasSale = purposes.includes('sale');
+          const hasPurchaseOrNeed = purposes.includes('purchase') || purposes.includes('need');
+
+          if (hasSale && hasPurchaseOrNeed) {
+            setDisplayRole('Mandatario de Compra/Venta');
+          } else if (hasSale) {
+            setDisplayRole('Mandatario de Venta');
+          } else if (hasPurchaseOrNeed) {
+            setDisplayRole('Mandatario de Compra');
+          } else {
+            setDisplayRole(getBaseRoleDisplay(user.role)); // Fallback if no clear mandatary role from assets
+          }
+        } else {
+          // No assets, use base role
+          setDisplayRole(getBaseRoleDisplay(user.role));
+        }
       }
+      setLoadingRole(false);
     };
 
-    fetchAdminCounts();
+    determineDisplayRole();
   }, [user, toast]);
 
-  const getRoleDisplay = (role: UserRole): string => {
+  const getRoleDisplay = (role: UserRole): string => { // This function is now getBaseRoleDisplay, keeping it for compatibility if used elsewhere, but displayRole state is primary
     switch (role) {
       case 'seller_mandatary':
         return 'Mandatario de Venta';
@@ -88,7 +126,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           <h3 className="text-xl font-semibold">ID Anónimo: {user.id}</h3>
           <p className="text-estate-lightgrey text-sm">Miembro desde {new Date(user.registrationDate).toLocaleDateString()}</p>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3">
+          {loadingRole ? (
+            <span className="text-sm font-medium px-3 py-1 rounded-md bg-gray-700 text-gray-400 animate-pulse">Cargando rol...</span>
+          ) : (
+            <span className="text-sm font-medium px-3 py-1 rounded-md bg-estate-highlight text-estate-dark">
+              {displayRole}
+            </span>
+          )}
           <Button
             variant="destructive"
             onClick={handleLogout}

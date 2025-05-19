@@ -98,7 +98,7 @@ const AdminDashboard = () => {
 
           setUserProfile({
             id: user.id,
-            role: profile?.role || 'buyer_mandatary',
+            role: profile?.admin ? 'admin' : (profile?.role || 'buyer_mandatary'), // Explicitly set role to 'admin' if user.admin is true
             registrationDate: user.created_at,
             isApproved: profile?.is_approved || false,
             fullName: profile?.full_name || '',
