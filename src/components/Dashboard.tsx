@@ -7,12 +7,12 @@ import AssetCard from './AssetCard';
 import AssetList from './AssetList';
 import { Asset, InformationRequest, User } from '@/utils/types';
 import StatusBadge from './StatusBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'; // Added CardFooter
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from "@/components/ui/button";
-import { FileText, Info, List, LayoutGrid, Eye } from 'lucide-react'; // Import Eye icon
+import { FileText, Info, List, LayoutGrid, Eye, Trash2 } from 'lucide-react'; // Import Eye and Trash2 icons
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/supabaseClient';
+import { supabase, deleteAsset as deleteAssetFromSupabase } from '@/supabaseClient'; // Import deleteAsset
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, safeDateParser } from '@/utils/formatters';
 
@@ -238,6 +238,33 @@ const Dashboard: React.FC = () => {
   const handleAssetSubmit = () => {
   };
 
+  const handleDeleteUserAsset = async (assetId: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres borrar este activo? Esta acción no se puede deshacer.')) {
+      return;
+    }
+    try {
+      await deleteAssetFromSupabase(assetId);
+      setUserAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+      if (userProfile) {
+        setUserProfile(prevProfile => ({
+          ...prevProfile!,
+          assetsCount: (prevProfile?.assetsCount || 0) - 1
+        }));
+      }
+      toast({
+        title: 'Activo Borrado',
+        description: `Tu activo con ID ${assetId.substring(0,8)}... ha sido borrado.`,
+      });
+    } catch (error: any) {
+      console.error('Error deleting user asset:', error);
+      toast({
+        title: 'Error al Borrar Activo',
+        description: error.message || 'Ocurrió un problema al intentar borrar tu activo.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSignNda = async (requestId: string) => {
     console.log("Attempting to sign NDA for request:", requestId);
     try {
@@ -249,7 +276,6 @@ const Dashboard: React.FC = () => {
       if (error) {
         if (error.message.includes('column "nda_firmado" does not exist')) {
            console.warn("Column 'nda_firmado' does not exist in 'infoactivo'. Skipping update for this column.");
-           // Attempt update without nda_firmado
            const { error: fallbackError } = await supabase
              .from('infoactivo')
              .update({ estado: 'nda_received' })
@@ -508,11 +534,58 @@ const Dashboard: React.FC = () => {
                       <div className="text-center py-8 bg-estate-offwhite rounded-md">
                         <p className="text-estate-steel">Aún no ha enviado ningún activo.</p>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ) : viewMode === 'card' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {userAssets.map(asset => (
-                          <AssetCard key={asset.id} asset={asset} />
+                          <AssetCard
+                            key={asset.id}
+                            asset={asset}
+                            onDeleteAsset={handleDeleteUserAsset}
+                          />
                         ))}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>ID</TableHead>
+                              <TableHead>Categoría</TableHead>
+                              <TableHead>Localización</TableHead>
+                              <TableHead>Precio</TableHead>
+                              <TableHead>Retorno</TableHead>
+                              <TableHead>Fecha Creación</TableHead>
+                              <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {userAssets.map(asset => (
+                              <TableRow key={asset.id}>
+                                <TableCell className="font-medium text-xs truncate" title={asset.id}>{asset.id.substring(0,8)}...</TableCell>
+                                <TableCell>
+                                  {asset.category}
+                                  {asset.subcategory1 && ` > ${asset.subcategory1}`}
+                                  {asset.subcategory2 && ` > ${asset.subcategory2}`}
+                                </TableCell>
+                                <TableCell>{asset.city}, {asset.country}</TableCell>
+                                <TableCell>{formatCurrency(asset.priceAmount, asset.priceCurrency)}</TableCell>
+                                <TableCell>{asset.expectedReturn ? `${asset.expectedReturn}%` : '-'}</TableCell>
+                                <TableCell>{safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}</TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteUserAsset(asset.id)}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Borrar
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
                   </CardContent>
@@ -529,14 +602,14 @@ const Dashboard: React.FC = () => {
                       <div className="text-center py-8 bg-estate-offwhite rounded-md">
                         <p className="text-estate-steel">Aún no ha realizado ninguna solicitud de información.</p>
                       </div>
-                    ) : (
+                    ) : viewMode === 'list' ? (
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>ID de Solicitud</TableHead>
-                              <TableHead>Activo</TableHead>
-                              <TableHead>Fecha</TableHead>
+                              <TableHead>ID Solicitud</TableHead>
+                              <TableHead>Activo (ID/Cat)</TableHead>
+                              <TableHead>Fecha Solicitud</TableHead>
                               <TableHead>Estado</TableHead>
                               <TableHead className="text-left">Acción</TableHead>
                             </TableRow>
@@ -546,59 +619,30 @@ const Dashboard: React.FC = () => {
                               const asset = getAssetById(request.assetId);
                               return (
                                 <TableRow key={request.id}>
-                                  <TableCell className="font-medium text-xs">{request.id}</TableCell>
+                                  <TableCell className="font-medium text-xs truncate" title={request.id}>{request.id.substring(0,8)}...</TableCell>
                                   <TableCell>
                                     <div className="flex flex-col">
-                                      <span>ID: {request.assetId}</span>
-                                      {asset && (
-                                        <span className="text-xs text-estate-steel">
-                                          {asset.category} {asset.city && `en ${asset.city}`}
-                                        </span>
-                                      )}
+                                      <span className="text-xs text-gray-500 truncate" title={request.assetId}>ID: {request.assetId.substring(0,8)}...</span>
+                                      <span>{asset?.category || 'N/A'}</span>
                                     </div>
                                   </TableCell>
-                                  <TableCell>
-                                    {safeDateParser(request.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}
-                                  </TableCell>
-                                  <TableCell>
-                                    <StatusBadge status={request.status} />
-                                  </TableCell>
+                                  <TableCell>{safeDateParser(request.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}</TableCell>
+                                  <TableCell><StatusBadge status={request.status} /></TableCell>
                                   <TableCell className="text-left">
-                                    {request.status === 'approved' && (
-                                      <span className="text-sm text-gray-500 italic">Esperando acción del administrador</span>
-                                    )}
+                                    {request.status === 'approved' && <span className="text-sm text-gray-500 italic">Esperando acción del admin</span>}
                                     {request.status === 'nda_requested' && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline" // Using outline for consistency, adjust if needed
-                                        onClick={() => handleSignNda(request.id)}
-                                        className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white" // Added darker hover
-                                      >
-                                        <FileText className="h-3 w-3 mr-1" />
-                                        <span>Documento de Confidencialiad Firmado</span>
+                                      <Button size="sm" variant="outline" onClick={() => handleSignNda(request.id)} className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white">
+                                        <FileText className="h-3 w-3 mr-1" /> Firmar NDA
                                       </Button>
                                     )}
-                                    {request.status === 'nda_received' && (
-                                      // Display message after user signs NDA
-                                      <span className="text-sm text-gray-500 italic">Esperando acción del administrador</span>
-                                    )}
+                                    {request.status === 'nda_received' && <span className="text-sm text-gray-500 italic">Esperando acción del admin</span>}
                                     {request.status === 'information_shared' && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline" // Using outline for consistency, adjust if needed
-                                        onClick={() => handleViewFiles(request.id)}
-                                        className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white" // Added darker hover
-                                      >
-                                        <Eye className="h-3 w-3 mr-1" />
-                                        <span>Ver Documentación del Activo</span>
+                                      <Button size="sm" variant="outline" onClick={() => handleViewFiles(request.id)} className="flex items-center gap-1 w-full border-gray-300 hover:bg-gray-600 hover:text-white">
+                                        <Eye className="h-3 w-3 mr-1" /> Ver Documentación
                                       </Button>
                                     )}
-                                    {request.status === 'rejected' && (
-                                      <span className="text-sm text-red-600 font-medium">Solicitud rechazada</span>
-                                    )}
-                                     {request.status === 'pending' && (
-                                      <span className="text-sm text-gray-500 italic">Pendiente de revisión</span>
-                                    )}
+                                    {request.status === 'rejected' && <span className="text-sm text-red-600 font-medium">Rechazada</span>}
+                                    {request.status === 'pending' && <span className="text-sm text-gray-500 italic">Pendiente</span>}
                                   </TableCell>
                                 </TableRow>
                               );
@@ -606,6 +650,46 @@ const Dashboard: React.FC = () => {
                           </TableBody>
                         </Table>
                       </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {userRequests.map(request => {
+                                const asset = getAssetById(request.assetId);
+                                return (
+                                    <Card key={request.id} className="flex flex-col">
+                                        <CardHeader>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <CardTitle className="text-sm">Solicitud ID: <span className="font-normal text-xs text-gray-600 truncate" title={request.id}>{request.id.substring(0,8)}...</span></CardTitle>
+                                                    <p className="text-xs text-gray-500">Activo ID: <span title={request.assetId}>{request.assetId.substring(0,8)}...</span> ({asset?.category || 'N/A'})</p>
+                                                </div>
+                                                <StatusBadge status={request.status} />
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="flex-grow space-y-1 text-xs">
+                                            <p><strong>Ubicación Activo:</strong> {asset ? `${asset.city}, ${asset.country}` : 'N/A'}</p>
+                                            <p><strong>Fecha Solicitud:</strong> {safeDateParser(request.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}</p>
+                                            {request.notes && <p className="truncate" title={request.notes}><strong>Mensaje:</strong> {request.notes}</p>}
+                                        </CardContent>
+                                        <CardFooter className="pt-2 flex justify-end">
+                                            {request.status === 'approved' && <span className="text-xs text-gray-500 italic">Esperando acción del admin</span>}
+                                            {request.status === 'nda_requested' && (
+                                              <Button size="sm" variant="outline" onClick={() => handleSignNda(request.id)} className="flex items-center gap-1 w-full text-xs border-gray-300 hover:bg-gray-600 hover:text-white">
+                                                <FileText className="h-3 w-3 mr-1" /> Firmar NDA
+                                              </Button>
+                                            )}
+                                            {request.status === 'nda_received' && <span className="text-xs text-gray-500 italic">Esperando acción del admin</span>}
+                                            {request.status === 'information_shared' && (
+                                              <Button size="sm" variant="outline" onClick={() => handleViewFiles(request.id)} className="flex items-center gap-1 w-full text-xs border-gray-300 hover:bg-gray-600 hover:text-white">
+                                                <Eye className="h-3 w-3 mr-1" /> Ver Documentación
+                                              </Button>
+                                            )}
+                                            {request.status === 'rejected' && <span className="text-xs text-red-600 font-medium">Rechazada</span>}
+                                            {request.status === 'pending' && <span className="text-xs text-gray-500 italic">Pendiente</span>}
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            })}
+                        </div>
                     )}
                   </CardContent>
                 </Card>

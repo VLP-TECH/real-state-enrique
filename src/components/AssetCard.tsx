@@ -2,15 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Asset } from '@/utils/types';
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, TrendingUp, Info } from 'lucide-react';
+import { MapPin, Calendar, TrendingUp, Info, Trash2 } from 'lucide-react';
 import { formatCurrency, safeDateParser } from '@/utils/formatters';
+import { deleteAsset } from '@/supabaseClient'; // Import deleteAsset
 
 interface AssetCardProps {
   asset: Asset;
   onRequestInfo?: (assetId: string) => void;
+  onDeleteAsset?: (assetId: string) => void; // Add onDeleteAsset prop
 }
 
-const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
+const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo, onDeleteAsset }) => {
   const formattedPrice = formatCurrency(asset.priceAmount, asset.priceCurrency);
   const formattedDate = safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida';
 
@@ -46,7 +48,7 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
       <CardContent className="p-5">
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-start">
-            <span className="font-semibold text-estate-navy">{asset.id}</span>
+            <span className="font-semibold text-estate-navy truncate" title={asset.id}>{asset.id}</span>
             <span className={`text-xs px-2 py-1 rounded-full ${getPurposeColor()}`}>
               {getPurposeLabel()}
             </span>
@@ -111,10 +113,10 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
         </div>
       </CardContent>
       
-      {onRequestInfo && (
-        <CardFooter className="bg-estate-offwhite py-3 px-5">
-          <Button 
-            className="w-full"
+      <CardFooter className="bg-estate-offwhite py-3 px-5 flex gap-2">
+        {onRequestInfo && (
+          <Button
+            className="flex-1"
             size="sm"
             variant="outline"
             onClick={() => onRequestInfo(asset.id)}
@@ -122,8 +124,29 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo }) => {
             <Info className="h-4 w-4 mr-2" />
             Solicitar Información
           </Button>
-        </CardFooter>
-      )}
+        )}
+        {onDeleteAsset && (
+          <Button
+            className="flex-1"
+            size="sm"
+            variant="destructive"
+            onClick={async () => {
+              if (window.confirm('¿Estás seguro de que quieres borrar este activo?')) {
+                try {
+                  await deleteAsset(asset.id);
+                  onDeleteAsset(asset.id); // Notify parent component
+                } catch (error) {
+                  console.error("Failed to delete asset:", error);
+                  // Optionally, show a toast notification for the error
+                }
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Borrar Activo
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 };

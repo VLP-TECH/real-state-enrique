@@ -15,7 +15,8 @@ import { es } from 'date-fns/locale';
 import StatusBadge from './StatusBadge'; // Import StatusBadge
 import AssetList from './AssetList'; // Re-import AssetList for card view
 import { formatCurrency, safeDateParser } from '@/utils/formatters'; // Import formatters
-import { Eye, List, LayoutGrid } from 'lucide-react'; // Import Eye, List, LayoutGrid icons
+import { Eye, List, LayoutGrid, Trash2 } from 'lucide-react'; // Import Eye, List, LayoutGrid, Trash2 icons
+import { deleteAsset as deleteAssetFromSupabase } from '@/supabaseClient'; // Import deleteAsset
 
 const generatePassword = () => {
   const length = 12;
@@ -463,6 +464,26 @@ const AdminDashboard = () => {
   };
 
   // --- New Handlers for Info Requests ---
+  const handleDeleteAsset = async (assetId: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres borrar este activo? Esta acción no se puede deshacer.')) {
+      return;
+    }
+    try {
+      await deleteAssetFromSupabase(assetId);
+      setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+      toast({
+        title: 'Activo Borrado',
+        description: `El activo con ID ${assetId.substring(0,8)}... ha sido borrado.`,
+      });
+    } catch (error: any) {
+      console.error('Error deleting asset from admin dashboard:', error);
+      toast({
+        title: 'Error al Borrar Activo',
+        description: error.message || 'Ocurrió un problema al intentar borrar el activo.',
+        variant: 'destructive',
+      });
+    }
+  };
   const handleApproveInfoRequest = async (requestId: string) => {
     try {
       const { error } = await supabase
@@ -1060,7 +1081,7 @@ const AdminDashboard = () => {
                                   <TableCell>{formatCurrency(asset.priceAmount, asset.priceCurrency)}</TableCell>
                                   <TableCell>{asset.expectedReturn ? `${asset.expectedReturn}%` : '-'}</TableCell>
                                   <TableCell>{safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida'}</TableCell>
-                                  <TableCell>
+                                  <TableCell className="flex gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -1076,6 +1097,15 @@ const AdminDashboard = () => {
                                       <Eye className="h-4 w-4 mr-1" />
                                       Ver
                                     </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleDeleteAsset(asset.id)}
+                                      aria-label="Borrar activo"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Borrar
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -1085,6 +1115,7 @@ const AdminDashboard = () => {
                       ) : ( // adminViewMode === 'card'
                         <AssetList
                           assets={assets}
+                          onDeleteAsset={handleDeleteAsset} // Pass delete handler
                           onRequestInfo={(assetId) => {
                             console.log(`Admin requesting info for asset: ${assetId}`);
                             toast({

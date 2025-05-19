@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react'; // Import useState and useEf
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, UserRole } from "@/utils/types";
 import { Button } from "./ui/button";
+import { Separator } from "@/components/ui/separator"; // Import Separator
+import { LogOut } from 'lucide-react'; // Import LogOut icon
 import { supabase } from '@/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -134,11 +136,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
               {displayRole}
             </span>
           )}
+          <Separator orientation="vertical" className="h-6 bg-estate-lightgrey/50" />
           <Button
             variant="destructive"
             onClick={handleLogout}
+            className="flex items-center gap-2"
           >
-            Cerrar Sesión
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
@@ -152,16 +156,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-estate-steel">Total Activos</p>
-                <p className="text-2xl font-semibold text-estate-slate">{totalAssetsCount ?? 'N/A'}</p>
+                <p className="text-sm text-estate-steel">Total Sol. Registro (Pendientes)</p>
+                <p className="text-2xl font-semibold text-estate-slate">{totalRegistrationRequestsCount ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-estate-steel">Total Sol. Información</p>
                 <p className="text-2xl font-semibold text-estate-slate">{totalInfoRequestsCount ?? 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-estate-steel">Total Sol. Registro (Pendientes)</p>
-                <p className="text-2xl font-semibold text-estate-slate">{totalRegistrationRequestsCount ?? 'N/A'}</p>
+                <p className="text-sm text-estate-steel">Total Activos</p>
+                <p className="text-2xl font-semibold text-estate-slate">{totalAssetsCount ?? 'N/A'}</p>
               </div>
             </div>
           )
