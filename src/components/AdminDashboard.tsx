@@ -15,8 +15,10 @@ import { es } from 'date-fns/locale';
 import StatusBadge from './StatusBadge'; // Import StatusBadge
 import AssetList from './AssetList'; // Re-import AssetList for card view
 import { formatCurrency, safeDateParser } from '@/utils/formatters'; // Import formatters
-import { Eye, List, LayoutGrid, Trash2 } from 'lucide-react'; // Import Eye, List, LayoutGrid, Trash2 icons
+import { Eye, List, LayoutGrid, Trash2, Filter } from 'lucide-react'; // Import Eye, List, LayoutGrid, Trash2, Filter icons
 import { deleteAsset as deleteAssetFromSupabase } from '@/supabaseClient'; // Import deleteAsset
+import { Input } from '@/components/ui/input'; // Import Input for filters
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select for filters
 
 const generatePassword = () => {
   const length = 12;
@@ -56,6 +58,13 @@ const AdminDashboard = () => {
   const [adminViewMode, setAdminViewMode] = useState<'card' | 'list'>('list'); // Renamed for global scope
   const [registroFilter, setRegistroFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('pending'); // Filter for registration requests
   const [infoRequestFilter, setInfoRequestFilter] = useState<RequestStatus | 'all'>('all'); // Filter for info requests, RequestStatus is from types.ts
+  // Asset Filters State
+  const [assetCategoryFilter, setAssetCategoryFilter] = useState<string>('all');
+  const [assetCityFilter, setAssetCityFilter] = useState<string>('');
+  const [assetSubCategory1Filter, setAssetSubCategory1Filter] = useState<string>('all');
+  const [assetSubCategory2Filter, setAssetSubCategory2Filter] = useState<string>('all');
+  const [assetPurposeFilter, setAssetPurposeFilter] = useState<string>('all'); // Added purpose filter
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -428,24 +437,6 @@ const AdminDashboard = () => {
 
     // Placeholder & conceptual call for invoking Supabase Edge Function to send welcome email
     console.log(`INFO: Aquí se invocaría la Supabase Edge Function 'send-welcome-email' para ${correo_electronico} con la contraseña generada.`);
-    // try {
-    //   const { data: functionData, error: functionError } = await supabase.functions.invoke('send-welcome-email', {
-    //     body: { email: correo_electronico, password: password, fullName: nombre_completo }
-    //   });
-    //   if (functionError) throw functionError;
-    //   toast({
-    //     title: 'Correo de Bienvenida Enviado',
-    //     description: `Se ha enviado un correo de bienvenida a ${correo_electronico}.`,
-    //   });
-    // } catch (error: any) {
-    //   console.error("Error invoking send-welcome-email function:", error);
-    //   toast({
-    //     title: 'Error al Enviar Correo',
-    //     description: `No se pudo enviar el correo de bienvenida a ${correo_electronico}. Por favor, envíalo manualmente. Error: ${error.message}`,
-    //     variant: 'destructive',
-    //     duration: 9000, // Longer duration for error messages
-    //   });
-    // }
     toast({ // Current placeholder until Edge Function is implemented
       title: 'Notificación: Envío de Correo (Simulado)',
       description: `Un correo de bienvenida con la contraseña generada para ${correo_electronico} debería ser enviado mediante una Supabase Edge Function ('send-welcome-email').`,
@@ -458,8 +449,6 @@ const AdminDashboard = () => {
         s.id === solicitudId ? { ...s, estado: true, user_id: user.id } : s // Mark as approved and associate user_id if available
       )
     );
-    // No navigation needed if we are keeping them in the list
-    // navigate('/dashboard/admin'); 
     setLoadingCrearCuenta(false); // Ensure loading state is reset
   };
 
@@ -543,12 +532,11 @@ const AdminDashboard = () => {
         variant: 'destructive',
       });
     }
-  }; // Correctly close handleDenyInfoRequest
+  }; 
 
-  const handleSendNda = async (requestId: string) => { // Define handleSendNda correctly
+  const handleSendNda = async (requestId: string) => { 
     console.log("Attempting to send NDA for request:", requestId);
     try {
-      // Update status in Supabase to 'nda_requested'
       const { error } = await supabase
         .from('infoactivo')
         .update({ estado: 'nda_requested' })
@@ -556,7 +544,6 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      // Update local state
       setInfoRequests(prevRequests =>
         prevRequests.map(req =>
           req.id === requestId ? { ...req, estado: 'nda_requested' } : req
@@ -566,7 +553,6 @@ const AdminDashboard = () => {
       toast({
         title: 'NDA Enviado (Simulado)',
         description: 'El estado de la solicitud se ha actualizado a NDA Solicitado.',
-        // Add actual NDA sending logic here in a real implementation
       });
 
     } catch (error: any) {
@@ -581,8 +567,6 @@ const AdminDashboard = () => {
 
   const handleShareInformation = async (requestId: string) => {
     console.log("Attempting to share information for request:", requestId);
-    // Placeholder for actual information sharing logic (e.g., updating status, sending links)
-    // For now, let's just update the status to 'information_shared' as an example
      try {
       const { error } = await supabase
         .from('infoactivo')
@@ -591,7 +575,6 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      // Update local state
       setInfoRequests(prevRequests =>
         prevRequests.map(req =>
           req.id === requestId ? { ...req, estado: 'information_shared' } : req
@@ -685,16 +668,16 @@ const AdminDashboard = () => {
                 <TabsContent value="admin" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <CardTitle>Gestión de Solicitudes de Registro</CardTitle>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
                           {(['pending', 'approved', 'denied', 'all'] as const).map((filter) => (
                             <Button
                               key={filter}
                               size="sm"
                               variant={registroFilter === filter ? 'default' : 'outline'}
                               onClick={() => setRegistroFilter(filter)}
-                              className={registroFilter === filter ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}
+                              className={`text-xs px-2 py-1 h-9 sm:w-auto ${registroFilter === filter ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}`}
                             >
                               {filter === 'pending' && 'Pendientes'}
                               {filter === 'approved' && 'Aprobadas'}
@@ -710,7 +693,8 @@ const AdminDashboard = () => {
                         <div className="flex justify-center items-center p-4">
                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
                         </div>
-                      ) : (() => {
+                      ) : (
+                        (() => {
                         const filteredSolicitudes = solicitudes.filter(s => {
                           if (registroFilter === 'all') return true;
                           if (registroFilter === 'pending') return s.estado === null;
@@ -876,7 +860,8 @@ const AdminDashboard = () => {
                             ))}
                           </div>
                         )
-                      })()}
+                      })()
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -885,16 +870,16 @@ const AdminDashboard = () => {
                 <TabsContent value="info-requests" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <CardTitle>Solicitudes de Información de Activos</CardTitle>
-                        <div className="flex gap-1 flex-wrap justify-end">
+                        <div className="flex flex-wrap gap-1 items-center w-full sm:w-auto justify-start sm:justify-end">
                           {(['all', 'pending', 'approved', 'rejected', 'nda_requested', 'nda_received', 'information_shared'] as const).map((filterValue: RequestStatus | 'all') => (
                             <Button
                               key={filterValue}
                               size="sm"
                               variant={infoRequestFilter === filterValue ? 'default' : 'outline'}
                               onClick={() => setInfoRequestFilter(filterValue)}
-                              className={`text-xs px-2 py-1 ${infoRequestFilter === filterValue ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}`}
+                              className={`text-xs px-2 py-1 h-9 sm:w-auto ${infoRequestFilter === filterValue ? 'bg-[#2A3928]/90 text-white border-[#E1D48A]' : 'border-gray-300'}`}
                             >
                               {filterValue === 'all' && 'Todas'}
                               {filterValue === 'pending' && 'Pendientes'}
@@ -1032,7 +1017,7 @@ const AdminDashboard = () => {
                               </div>
                             );
                           }
-                        })() // Removed extra parenthesis here that might have caused syntax error
+                        })() 
                       )}
                     </CardContent>
                   </Card>
@@ -1042,17 +1027,85 @@ const AdminDashboard = () => {
                 <TabsContent value="asset-management" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Listado de Activos</CardTitle>
-                      {/* View switcher buttons removed from here, now global */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <CardTitle>Listado de Activos</CardTitle>
+                        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto justify-start sm:justify-end">
+                          {/* Asset Filters */}
+                          <Select value={assetCategoryFilter} onValueChange={setAssetCategoryFilter}>
+                            <SelectTrigger className="w-full sm:w-auto md:w-[130px] text-xs h-9">
+                              <SelectValue placeholder="Categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Categorías</SelectItem>
+                              {[...new Set(assets.map(asset => asset.category))].sort().map(category => (
+                                <SelectItem key={category} value={category}>{category}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={assetSubCategory1Filter} onValueChange={setAssetSubCategory1Filter}>
+                            <SelectTrigger className="w-full sm:w-auto md:w-[130px] text-xs h-9">
+                              <SelectValue placeholder="Subcategoría 1" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Subcat. 1</SelectItem>
+                              {[...new Set(assets.filter(a => assetCategoryFilter === 'all' || a.category === assetCategoryFilter).map(asset => (asset.subcategory1 || '')).filter(Boolean) as string[])].sort().map(subcat => (
+                                <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                           <Select value={assetSubCategory2Filter} onValueChange={setAssetSubCategory2Filter}>
+                            <SelectTrigger className="w-full sm:w-auto md:w-[130px] text-xs h-9">
+                              <SelectValue placeholder="Subcategoría 2" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Subcat. 2</SelectItem>
+                              {[...new Set(assets.filter(a => (assetCategoryFilter === 'all' || a.category === assetCategoryFilter) && (assetSubCategory1Filter === 'all' || (a.subcategory1 || '') === assetSubCategory1Filter)).map(asset => (asset.subcategory2 || '')).filter(Boolean) as string[])].sort().map(subcat => (
+                                <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="text"
+                            placeholder="Ciudad..."
+                            value={assetCityFilter}
+                            onChange={(e) => setAssetCityFilter(e.target.value)}
+                            className="w-full sm:w-auto md:w-[130px] text-xs h-9"
+                          />
+                          <Select value={assetPurposeFilter} onValueChange={setAssetPurposeFilter}>
+                            <SelectTrigger className="w-full sm:w-auto md:w-[130px] text-xs h-9">
+                              <SelectValue placeholder="Propósito" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos Propósitos</SelectItem>
+                              <SelectItem value="sale">En Venta</SelectItem>
+                              <SelectItem value="purchase">Para Compra</SelectItem>
+                              <SelectItem value="need">Necesidad</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {loadingAssets ? (
                         <div className="flex justify-center items-center p-4">
                           <Loader2 className="animate-spin h-8 w-8 text-[#E1D48A]" />
                         </div>
-                      ) : assets.length === 0 ? (
-                        <p>No hay activos disponibles.</p>
-                      ) : adminViewMode === 'list' ? ( // Use global adminViewMode
+                      ) : ( 
+                        (() => {
+                        const filteredAssets = assets.filter(asset => {
+                          const categoryMatch = assetCategoryFilter === 'all' || asset.category === assetCategoryFilter;
+                          const subCategory1Match = assetSubCategory1Filter === 'all' || (asset.subcategory1 || '') === assetSubCategory1Filter;
+                          const subCategory2Match = assetSubCategory2Filter === 'all' || (asset.subcategory2 || '') === assetSubCategory2Filter;
+                          const cityMatch = assetCityFilter === '' || asset.city.toLowerCase().includes(assetCityFilter.toLowerCase());
+                          const purposeMatch = assetPurposeFilter === 'all' || asset.purpose === assetPurposeFilter;
+                          return categoryMatch && subCategory1Match && subCategory2Match && cityMatch && purposeMatch;
+                        });
+
+                        if (filteredAssets.length === 0) {
+                          return <p>No hay activos que coincidan con los filtros.</p>;
+                        }
+                        
+                        return adminViewMode === 'list' ? ( 
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
@@ -1070,7 +1123,7 @@ const AdminDashboard = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {assets.map((asset) => (
+                              {filteredAssets.map((asset) => (
                                 <TableRow key={asset.id}>
                                   <TableCell className="text-xs" title={asset.id}>{asset.id.substring(0, 8)}...</TableCell>
                                   <TableCell>{asset.category}</TableCell>
@@ -1114,7 +1167,7 @@ const AdminDashboard = () => {
                         </div>
                       ) : ( // adminViewMode === 'card'
                         <AssetList
-                          assets={assets}
+                          assets={filteredAssets} // Use filteredAssets for card view as well
                           onDeleteAsset={handleDeleteAsset} // Pass delete handler
                           onRequestInfo={(assetId) => {
                             console.log(`Admin requesting info for asset: ${assetId}`);
@@ -1126,6 +1179,8 @@ const AdminDashboard = () => {
                           buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
                         />
                       )}
+                      ) () // Correctly invoke the IIFE for assets tab
+                    )}
                     </CardContent>
                   </Card>
                 </TabsContent>

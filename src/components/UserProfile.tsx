@@ -1,13 +1,12 @@
 
-import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, UserRole } from "@/utils/types";
 import { Button } from "./ui/button";
-import { Separator } from "@/components/ui/separator"; // Import Separator
-import { LogOut } from 'lucide-react'; // Import LogOut icon
+import { Separator } from "@/components/ui/separator";
+import { LogOut } from 'lucide-react';
 import { supabase } from '@/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import AuthManager from '@/components/AuthManager';
 
 interface UserProfileProps {
@@ -16,10 +15,8 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { handleLogout } = AuthManager();
 
-  // State for admin counts
   const [totalAssetsCount, setTotalAssetsCount] = useState<number | null>(null);
   const [totalInfoRequestsCount, setTotalInfoRequestsCount] = useState<number | null>(null);
   const [totalRegistrationRequestsCount, setTotalRegistrationRequestsCount] = useState<number | null>(null);
@@ -72,21 +69,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           setLoadingAdminCounts(false);
         }
       } else {
-        // For non-admin users, get role directly from their profile
         const { data: userProfileData, error: profileError } = await supabase
           .from('profiles')
-          .select('su_rol') // Fetching 'su_rol' as per your feedback
+          .select('su_rol')
           .eq('user_id', user.id)
           .single();
 
         if (profileError) {
           console.error("Error fetching user profile for role from 'profiles.su_rol':", profileError);
-          // Fallback to the role initially passed in the user prop if DB fetch fails
           setDisplayRole(getBaseRoleDisplay(user.role)); 
         } else if (userProfileData && userProfileData.su_rol) {
           setDisplayRole(getBaseRoleDisplay(userProfileData.su_rol as UserRole));
         } else {
-          // Fallback if profile is fetched but su_rol is not found, or profile itself not found
           console.warn(`Profile 'su_rol' not found in DB for user ${user.id}. Falling back to user.role prop.`);
           setDisplayRole(getBaseRoleDisplay(user.role));
         }
@@ -97,7 +91,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     determineDisplayRole();
   }, [user, toast]);
 
-  const getRoleDisplay = (role: UserRole): string => { // This function is now getBaseRoleDisplay, keeping it for compatibility if used elsewhere, but displayRole state is primary
+  const getRoleDisplay = (role: UserRole): string => {
     switch (role) {
       case 'seller_mandatary':
         return 'Mandatario de Venta';

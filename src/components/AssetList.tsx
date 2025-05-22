@@ -7,13 +7,13 @@ interface AssetListProps {
     location?: string;
     profitability?: string;
     price?: string | undefined;
+    purpose?: string; // Add purpose prop
     onRequestInfo?: (assetId: string) => void;
-    onDeleteAsset?: (assetId: string) => void; // Add onDeleteAsset prop
-    buttonStyle?: string; // This might become redundant if AssetCard handles its own styling
-    // Consider if userRole is needed to conditionally show delete button if AssetList is used by non-admins
+    onDeleteAsset?: (assetId: string) => void;
+    buttonStyle?: string;
 }
 
-const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, price, onRequestInfo, onDeleteAsset }) => {
+const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, price, purpose, onRequestInfo, onDeleteAsset }) => {
     const filteredAssets = assets.filter(asset => {
         if (location && asset.city && asset.country &&
             !asset.city.toLowerCase().includes(location.toLowerCase()) &&
@@ -38,6 +38,10 @@ const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, 
                 return false;
             }
         }
+
+        if (purpose && asset.purpose && !asset.purpose.toLowerCase().includes(purpose.toLowerCase())) {
+            return false;
+        }
     
         return true;
     });
@@ -49,7 +53,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, location, profitability, 
                     key={asset.id}
                     asset={asset}
                     onRequestInfo={onRequestInfo}
-                    onDeleteAsset={onDeleteAsset} // Pass the onDeleteAsset prop to AssetCard
+                    onDeleteAsset={onDeleteAsset}
                 />
             ))}
         </div>

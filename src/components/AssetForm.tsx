@@ -32,8 +32,7 @@ const categoriesData: Category[] = [
       { name: "Unifamiliar en hilera", subcategories2: [{ name: "Con jardín / Sin jardín" }] },
       { name: "Residencial turístico", subcategories2: [{ name: "Vacacional / Coliving" }] },
       { name: "Residencia de estudiantes", subcategories2: [{ name: "Internado / Mixto" }] },
-      { name: "Coliving o vivienda con servicios", subcategories2: [{ name: "Senior / General" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Coliving o vivienda con servicios", subcategories2: [{ name: "Senior / General" }] }
     ],
   },
   {
@@ -43,9 +42,8 @@ const categoriesData: Category[] = [
       { name: "Comercial", subcategories2: [{ name: "Centro comercial / Galería / Flagship" }] },
       { name: "Hotelero", subcategories2: [{ name: "Hotel / Aparthotel / Hostal" }] },
       { name: "Restauración y ocio", subcategories2: [{ name: "Club / Restaurante / Casino" }] },
-      { name: "Educativo privado", subcategories2: [{ name: "Escuela / Academia / Universidad" }] },
-      { name: "Sanitario privado", subcategories2: [{ name: "Clínica / Estética / Dental" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Educativo", subcategories2: [{ name: "Escuela / Academia / Universidad" }] },
+      { name: "Sanitario", subcategories2: [{ name: "Clínica / Estética / Dental" }] }
     ],
   },
   {
@@ -53,17 +51,15 @@ const categoriesData: Category[] = [
     subcategories1: [
       { name: "Nave industrial", subcategories2: [{ name: "Aislada / Complejo industrial" }] },
       { name: "Plataforma logística", subcategories2: [{ name: "Última milla / Cross-docking" }] },
-      { name: "Productivo", subcategories2: [{ name: "Taller / Fábrica ligera" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Productivo", subcategories2: [{ name: "Taller / Fábrica ligera" }] }
     ],
   },
   {
-    name: "Edificio Sociosanitario",
+    name: "Edificio Dotacional",
     subcategories1: [
       { name: "Residencia de mayores", subcategories2: [{ name: "Asistida / No asistida" }] },
       { name: "Centro de día", subcategories2: [{ name: "Dependencia / Salud mental" }] },
-      { name: "Salud privada", subcategories2: [{ name: "Centro de rehabilitación / Mixto" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Salud privada", subcategories2: [{ name: "Centro de rehabilitación / Mixto" }] }
     ],
   },
   {
@@ -72,8 +68,7 @@ const categoriesData: Category[] = [
       { name: "Resort", subcategories2: [{ name: "Todo incluido / Villas" }] },
       { name: "Rural", subcategories2: [{ name: "Agroturismo / Hotel rural" }] },
       { name: "Balneario / Wellness", subcategories2: [{ name: "Spa / Termal" }] },
-      { name: "Albergue o hostel", subcategories2: [{ name: "Urbano / Natural" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Albergue o hostel", subcategories2: [{ name: "Urbano / Natural" }] }
     ],
   },
   {
@@ -84,8 +79,7 @@ const categoriesData: Category[] = [
       { name: "Convento o iglesia privada", subcategories2: [{ name: "Desafectado / Reconvertido" }] },
       { name: "Centro deportivo privado", subcategories2: [{ name: "Pistas / Gimnasio / Club" }] },
       { name: "Teatro, cine, auditorio privado", subcategories2: [{ name: "En uso / Cerrado" }] },
-      { name: "Centro de datos o torre técnica", subcategories2: [{ name: "Telecom / Servidores" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Centro de datos o torre técnica", subcategories2: [{ name: "Telecom / Servidores" }] }
     ],
   },
   {
@@ -93,88 +87,77 @@ const categoriesData: Category[] = [
     subcategories1: [
       { name: "Libre", subcategories2: [{ name: "Piso / Ático / Bajo con jardín" }] },
       { name: "Protegida (VPO)", subcategories2: [{ name: "Oficial / Autonómica" }] },
-      { name: "Turística", subcategories2: [{ name: "Licencia VT / En trámite" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Turística", subcategories2: [{ name: "Licencia VT / En trámite" }] }
     ],
   },
   {
     name: "Local Comercial",
     subcategories1: [
       { name: "A pie de calle", subcategories2: [{ name: "Esquina / Interior de galería" }] },
-      { name: "En edificio", subcategories2: [{ name: "Oficinas / Retail" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "En edificio", subcategories2: [{ name: "Oficinas / Retail" }] }
     ],
   },
   {
     name: "Oficina",
     subcategories1: [
       { name: "En edificio terciario", subcategories2: [{ name: "Diáfana / Compartmentada" }] },
-      { name: "Coworking unitario", subcategories2: [{ name: "Mesa / Despacho" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Coworking unitario", subcategories2: [{ name: "Mesa / Despacho" }] }
     ],
   },
   {
     name: "Activo Logístico",
     subcategories1: [
       { name: "Nave pequeña", subcategories2: [{ name: "Box / Trastero industrial" }] },
-      { name: "Módulo en nave mayor", subcategories2: [{ name: "Separado / Común" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Módulo en nave mayor", subcategories2: [{ name: "Separado / Común" }] }
     ],
   },
   {
     name: "Plaza de Garaje",
     subcategories1: [
       { name: "Subterránea", subcategories2: [{ name: "Con trastero / Sin trastero" }] },
-      { name: "Exterior", subcategories2: [{ name: "Cubierta / Descubierta" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Exterior", subcategories2: [{ name: "Cubierta / Descubierta" }] }
     ],
   },
   {
     name: "Trastero",
     subcategories1: [
       { name: "En finca", subcategories2: [{ name: "Vinculado a vivienda / Independiente" }] },
-      { name: "Independiente", subcategories2: [{ name: "Acceso privado / Acceso común" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Independiente", subcategories2: [{ name: "Acceso privado / Acceso común" }] }
     ],
   },
   {
     name: "Solar Urbano",
     subcategories1: [
       { name: "Consolidado", subcategories2: [{ name: "Con licencia / Sin licencia" }] },
-      { name: "No consolidado", subcategories2: [{ name: "Requiere urbanización / Cesiones" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "No consolidado", subcategories2: [{ name: "Requiere urbanización / Cesiones" }] }
     ],
   },
   {
     name: "Suelo Urbanizable",
     subcategories1: [
       { name: "Sectorizado", subcategories2: [{ name: "Plan parcial aprobado / En tramitación" }] },
-      { name: "No sectorizado", subcategories2: [{ name: "Planeamiento no iniciado / estratégico" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "No sectorizado", subcategories2: [{ name: "Planeamiento no iniciado / estratégico" }] }
     ],
   },
   {
     name: "Suelo Rústico",
     subcategories1: [
       { name: "Agrícola", subcategories2: [{ name: "En producción / Secano" }] },
-      { name: "Posible reconversión", subcategories2: [{ name: "Cerca de núcleo / Proyecto turístico" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Posible reconversión", subcategories2: [{ name: "Cerca de núcleo / Proyecto turístico" }] }
     ],
   },
   {
     name: "Solar con Proyecto",
     subcategories1: [
       { name: "Con proyecto visado", subcategories2: [{ name: "Con licencia / Sin licencia" }] },
-      { name: "Promoción iniciada", subcategories2: [{ name: "Excavación hecha / No iniciada" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Promoción iniciada", subcategories2: [{ name: "Excavación hecha / No iniciada" }] }
     ],
   },
   {
     name: "Suelo Industrial",
     subcategories1: [
       { name: "Parcela en polígono", subcategories2: [{ name: "Media / Gran superficie" }] },
-      { name: "Suelo logístico", subcategories2: [{ name: "Plataforma / Última milla" }] },
-      { name: "No declarado", subcategories2: [{ name: "-" }] },
+      { name: "Suelo logístico", subcategories2: [{ name: "Plataforma / Última milla" }] }
     ],
   },
 ];

@@ -33,6 +33,7 @@ const Dashboard: React.FC = () => {
   const [profitabilityRangeFilter, setProfitabilityRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
   const [categoryFilter, setCategoryFilter] = useState('');
   const [priceRangeFilter, setPriceRangeFilter] = useState<{min: number | undefined, max: number | undefined}>({min: undefined, max: undefined});
+  const [purposeFilter, setPurposeFilter] = useState('');
 
   const mainCategories = [
     "Edificio Residencial", "Edificio Terciario", "Edificio Industrial",
@@ -368,22 +369,23 @@ const Dashboard: React.FC = () => {
               </div>
 
               <TabsContent value="discover" className="mt-16 md:mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <label htmlFor="location">Localización:</label>
+                <div className="flex flex-wrap gap-2 mb-4 items-end"> {/* Changed to flex, added items-end for alignment */}
+                  <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]"> {/* Adjusted width for 5 filters */}
+                    {/* <label htmlFor="location">Localización:</label> */}
                     <input
                       type="text"
                       id="location"
-                      className="border rounded px-2 py-1 w-full h-9"
+                      placeholder="Localización..."
+                      className="border rounded px-2 py-1 w-full h-9 text-sm"
                       value={locationFilter}
                       onChange={(e) => setLocationFilter(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <label htmlFor="profitability">Rentabilidad:</label>
+                  <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]">
+                    {/* <label htmlFor="profitability">Rentabilidad:</label> */}
                     <select
                       id="profitability"
-                      className="border rounded px-2 py-1 w-full h-9"
+                      className="border rounded px-2 py-1 w-full h-9 text-sm"
                       value={
                         profitabilityRangeFilter.min === undefined && profitabilityRangeFilter.max === undefined
                           ? 'all'
@@ -398,7 +400,7 @@ const Dashboard: React.FC = () => {
                         }
                       }}
                     >
-                      <option value="all">Todos</option>
+                      <option value="all">Rentabilidad</option> {/* Changed placeholder */}
                       <option value="0-5">0% - 5%</option>
                       <option value="5-10">5% - 10%</option>
                       <option value="10-15">10% - 15%</option>
@@ -407,25 +409,39 @@ const Dashboard: React.FC = () => {
                       <option value="25-100">Más de 25%</option>
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="category">Categoría:</label>
+                  <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]">
+                    {/* <label htmlFor="category">Categoría:</label> */}
                     <select
                       id="category"
-                      className="border rounded px-2 py-1 w-full h-9"
+                      className="border rounded px-2 py-1 w-full h-9 text-sm"
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
                     >
-                      <option value="">Todas</option>
+                      <option value="">Categoría</option> {/* Changed placeholder */}
                       {mainCategories.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="price">Precio:</label>
+                  <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]">
+                    {/* <label htmlFor="purpose">Propósito:</label> */}
+                    <select
+                      id="purpose"
+                      className="border rounded px-2 py-1 w-full h-9 text-sm"
+                      value={purposeFilter}
+                      onChange={(e) => setPurposeFilter(e.target.value)}
+                    >
+                      <option value="">Propósito</option> {/* Changed placeholder */}
+                      <option value="sale">En Venta</option>
+                      <option value="purchase">Para Compra</option>
+                      <option value="need">Necesidad</option>
+                    </select>
+                  </div>
+                  <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]">
+                    {/* <label htmlFor="price">Precio:</label> */}
                     <select
                       id="price"
-                      className="border rounded px-2 py-1 w-full h-9"
+                      className="border rounded px-2 py-1 w-full h-9 text-sm"
                       value={
                         priceRangeFilter.min === undefined && priceRangeFilter.max === undefined
                           ? 'all'
@@ -440,7 +456,7 @@ const Dashboard: React.FC = () => {
                         }
                       }}
                     >
-                      <option value="all">Todos</option>
+                      <option value="all">Precio</option> {/* Changed placeholder */}
                       <option value="0-100000">$0 - $100,000</option>
                       <option value="100000-500000">$100,000 - $500,000</option>
                       <option value="500000-1000000">$500,000 - $1,000,000</option>
@@ -456,8 +472,8 @@ const Dashboard: React.FC = () => {
                     assets={mockAssets}
                     location={locationFilter}
                     profitability={profitabilityRangeFilter.min !== undefined ? `${profitabilityRangeFilter.min}-${profitabilityRangeFilter.max}` : ''}
-
                     price={priceRangeFilter.min !== undefined ? `${priceRangeFilter.min}-${priceRangeFilter.max}` : ''}
+                    purpose={purposeFilter}
                     onRequestInfo={(assetId) => handleRequestInfo(getAssetById(assetId))}
                     buttonStyle="bg-[#E1D48A] hover:bg-[#E1D48A]/90 text-estate-navy"
                   />
