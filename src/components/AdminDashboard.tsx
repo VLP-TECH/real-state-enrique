@@ -628,8 +628,8 @@ const AdminDashboard = () => {
 
             <div className="lg:col-span-3">
               <Tabs defaultValue="admin" className="w-full">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                  <TabsList className="grid w-full sm:w-auto grid-cols-1 sm:grid-cols-3 md:inline-flex border-[#E1D48A] mb-2 sm:mb-0">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                  <TabsList className="order-2 md:order-1 grid w-full grid-cols-1 md:w-auto md:inline-flex border-[#E1D48A] mt-2 md:mt-0">
                     <TabsTrigger value="admin" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
                       Gestión de Registros
                     </TabsTrigger>
@@ -640,7 +640,7 @@ const AdminDashboard = () => {
                       Gestión de Activos
                     </TabsTrigger>
                   </TabsList>
-                  <div className="flex items-center gap-2 self-start sm:self-center">
+                  <div className="order-1 md:order-2 grid grid-cols-2 md:flex items-center gap-2 w-full md:w-auto md:self-center mb-2 md:mb-0">
                     <Button
                       size="sm"
                       variant="outline"
@@ -665,7 +665,7 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Gestión de Registros Tab */}
-                <TabsContent value="admin" className="mt-6 space-y-6">
+                <TabsContent value="admin" className="mt-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                   <Card>
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -867,7 +867,7 @@ const AdminDashboard = () => {
                 </TabsContent>
 
                 {/* Solicitudes de Información Tab */}
-                <TabsContent value="info-requests" className="mt-6 space-y-6">
+                <TabsContent value="info-requests" className="mt-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                   <Card>
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -1024,7 +1024,7 @@ const AdminDashboard = () => {
                 </TabsContent>
 
                 {/* Gestión de Activos Tab */}
-                <TabsContent value="asset-management" className="mt-6 space-y-6">
+                <TabsContent value="asset-management" className="mt-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                   <Card>
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">

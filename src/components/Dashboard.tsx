@@ -329,8 +329,8 @@ const Dashboard: React.FC = () => {
 
           <div className="lg:col-span-3 ">
             <Tabs defaultValue="discover" className="w-full">
-              <div className="flex justify-between items-center">
-                <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-flex border-[#E1D48A]">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                <TabsList className="order-2 md:order-1 grid w-full grid-cols-1 sm:grid-cols-2 md:w-auto md:inline-flex border-[#E1D48A] mt-2 md:mt-0">
                   <TabsTrigger value="discover" className="data-[state=active]:border-[#E1D48A] data-[state=active]:border-b-2">
                     Descubrir Activos
                   </TabsTrigger>
@@ -344,7 +344,7 @@ const Dashboard: React.FC = () => {
                     Subir Activo
                   </TabsTrigger>
                 </TabsList>
-                <div className="flex items-center gap-2">
+                <div className="order-1 md:order-2 grid grid-cols-2 md:flex items-center gap-2 w-full md:w-auto md:self-center mb-2 md:mb-0">
                   <Button
                     size="sm"
                     variant="outline"
@@ -368,7 +368,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <TabsContent value="discover" className="mt-16 md:mt-6">
+              <TabsContent value="discover" className="mt-16 md:mt-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                 <div className="flex flex-wrap gap-2 mb-4 items-end"> {/* Changed to flex, added items-end for alignment */}
                   <div className="flex-grow sm:flex-grow-0 sm:w-auto md:w-[calc(20%-0.5rem)]"> {/* Adjusted width for 5 filters */}
                     {/* <label htmlFor="location">Localización:</label> */}
@@ -540,7 +540,7 @@ const Dashboard: React.FC = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="my-assets" className="mt-16 md:mt-6 space-y-6">
+              <TabsContent value="my-assets" className="mt-16 md:mt-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                 <Card>
                   <CardHeader>
                     <CardTitle>Mis Activos Enviados</CardTitle>
@@ -608,7 +608,7 @@ const Dashboard: React.FC = () => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="requests" className="mt-16 md:mt-6">
+              <TabsContent value="requests" className="mt-16 md:mt-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                 <Card>
                   <CardHeader>
                     <CardTitle>Solicitudes de Información</CardTitle>
@@ -711,7 +711,7 @@ const Dashboard: React.FC = () => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="new-asset" className="mt-16 md:mt-6 space-y-6">
+              <TabsContent value="new-asset" className="mt-16 md:mt-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
                 {userProfile ? (
                   <AssetForm
                     onSubmit={handleAssetSubmit}
