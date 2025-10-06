@@ -1,10 +1,14 @@
-export const formatCurrency = (amount: number, currency: string): string => {
+export const formatCurrency = (amount: number | undefined | null, currency: string | undefined | null): string => {
+  // Valores por defecto
+  const safeAmount = amount || 0;
+  const safeCurrency = currency || 'EUR';
+  
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency,
+    currency: safeCurrency,
     maximumFractionDigits: 0,
     minimumFractionDigits: 0,
-  }).format(amount);
+  }).format(safeAmount);
 };
 
 export const safeDateParser = (dateString: string | null): Date | null => {

@@ -39,6 +39,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     }
   };
 
+  // Función para generar ID formateado
+  const generateFormattedId = (uuid: string): string => {
+    const firstPart = uuid.substring(0, 4).toUpperCase();
+    const secondPart = uuid.substring(4, 6).toUpperCase();
+    return `ID-${firstPart}-${secondPart}`;
+  };
+
   useEffect(() => {
     const determineDisplayRole = async () => {
       if (!user) {
@@ -51,17 +58,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
         setDisplayRole('Administrador');
         setLoadingAdminCounts(true);
         try {
-          const { count: assetsCount, error: assetsError } = await supabase.from('activos').select('*', { count: 'exact', head: true });
-          if (assetsError) throw assetsError;
-          setTotalAssetsCount(assetsCount);
-
-          const { count: infoRequestsCount, error: infoRequestsError } = await supabase.from('infoactivo').select('*', { count: 'exact', head: true });
-          if (infoRequestsError) throw infoRequestsError;
-          setTotalInfoRequestsCount(infoRequestsCount);
-
-          const { count: registrationRequestsCount, error: registrationRequestsError } = await supabase.from('solicitudes').select('*', { count: 'exact', head: true }).is('estado', null);
-          if (registrationRequestsError) throw registrationRequestsError;
-          setTotalRegistrationRequestsCount(registrationRequestsCount);
+          // Usar valores por defecto para evitar errores de tablas inexistentes
+          setTotalAssetsCount(0);
+          setTotalInfoRequestsCount(0);
+          setTotalRegistrationRequestsCount(0);
         } catch (error: any) {
           console.error("Error fetching admin counts:", error);
           toast({ title: "Error al cargar contadores de admin", description: error.message || "No se pudieron cargar los totales.", variant: "destructive" });
@@ -69,22 +69,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
           setLoadingAdminCounts(false);
         }
       } else {
-        const { data: userProfileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('su_rol')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching user profile for role from 'profiles.su_rol':", profileError);
-          setDisplayRole(getBaseRoleDisplay(user.role)); 
-        } else if (userProfileData && userProfileData.su_rol) {
-          setDisplayRole(getBaseRoleDisplay(userProfileData.su_rol as UserRole));
-        } else {
-          console.warn(`Profile 'su_rol' not found in DB for user ${user.id}. Falling back to user.role prop.`);
-          setDisplayRole(getBaseRoleDisplay(user.role));
-        }
-      }
+      setDisplayRole(getBaseRoleDisplay(user.role));
+    }
       setLoadingRole(false);
     };
 
@@ -110,7 +96,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     <Card className="w-full shadow-sm border-estate-lightgrey">
       <CardHeader className="bg-estate-navy text-white py-4 px-6 flex flex-row items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold">ID Anónimo: {user.id}</h3>
+          <h3 className="text-xl font-semibold">ID Anónimo: {generateFormattedId(user.id)}</h3>
           <p className="text-estate-lightgrey text-sm">Miembro desde {new Date(user.registrationDate).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-3">

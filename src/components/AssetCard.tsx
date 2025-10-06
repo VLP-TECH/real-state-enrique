@@ -16,6 +16,9 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo, onDeleteAss
   const formattedPrice = formatCurrency(asset.priceAmount, asset.priceCurrency);
   const formattedDate = safeDateParser(asset.creado)?.toLocaleDateString('es-ES') ?? 'Fecha inválida';
 
+  // Generar ID formateado si no existe
+  const displayId = (asset as any).displayId || `ID-${asset.id.substring(0, 4).toUpperCase()}-${asset.id.substring(4, 6).toUpperCase()}`;
+
   const getPurposeColor = () => {
     switch (asset.purpose) {
       case 'sale':
@@ -48,7 +51,7 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onRequestInfo, onDeleteAss
       <CardContent className="p-5">
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-start">
-            <span className="font-semibold text-estate-navy truncate" title={asset.id}>{asset.id}</span>
+            <span className="font-semibold text-estate-navy truncate" title={asset.id}>{displayId}</span>
             <span className={`text-xs px-2 py-1 rounded-full ${getPurposeColor()}`}>
               {getPurposeLabel()}
             </span>

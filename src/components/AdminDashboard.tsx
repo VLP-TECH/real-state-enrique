@@ -68,15 +68,44 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          setLoading(false);
+          setAuthChecked(true);
+          return;
+        }
 
-      if (!user) {
-        // Removed the toast notification for unauthorized access
-        navigate('/');
-        return;
+        if (user) {
+          // Simplificar: determinar si es admin basado en el email
+          const isAdminUser = user.email === 'admin@gmail.com';
+          console.log('User email:', user.email, 'Is admin:', isAdminUser);
+          setIsAdmin(isAdminUser);
+          
+          setUserProfile({
+            id: user.id,
+            role: isAdminUser ? 'admin' : 'buyer_mandatary',
+            registrationDate: user.created_at,
+            isApproved: true,
+            fullName: user.email || '',
+            email: user.email || '',
+            assetsCount: 0,
+            requestsCount: 0,
+            admin: isAdminUser,
+          });
+        } else {
+          console.log('No user found');
+          setIsAdmin(false);
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error('Error in checkAuth:', error);
+      } finally {
+        setLoading(false);
+        setAuthChecked(true);
       }
-
-      setAuthChecked(true); 
     };
 
     checkAuth();
@@ -96,11 +125,12 @@ const AdminDashboard = () => {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
+          // Arreglar la consulta de profiles
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle(); // Cambiar de .single() a .maybeSingle()
 
           if (profileError) {
             console.error('Error fetching profile:', profileError);
@@ -108,7 +138,7 @@ const AdminDashboard = () => {
 
           setUserProfile({
             id: user.id,
-            role: profile?.admin ? 'admin' : (profile?.role || 'buyer_mandatary'), // Explicitly set role to 'admin' if user.admin is true
+            role: profile?.admin ? 'admin' : (profile?.role || 'buyer_mandatary'),
             registrationDate: user.created_at,
             isApproved: profile?.is_approved || false,
             fullName: profile?.full_name || '',
@@ -132,21 +162,26 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchSolicitudes = async () => {
+      if (!isAdmin) return;
       setLoadingSolicitudes(true);
       try {
         const { data, error } = await supabase
           .from('solicitudes')
           .select('*')
-          .order('creado', { ascending: false }); // Corrected to 'creado'
+          .order('created_at', { ascending: false });
 
-        if (error) throw error;
-
+        if (error) {
+          console.error('Error fetching solicitudes:', error);
+          throw error;
+        }
+        
+        console.log('Raw data from solicitudes fetch:', data);
         setSolicitudes(data || []);
-      } catch (error) {
-        console.error('Error al obtener solicitudes:', error);
+      } catch (error: any) {
+        console.error('Error fetching solicitudes:', error);
         toast({
-          title: 'Error al Cargar Solicitudes de Registro',
-          description: (error as Error).message || 'Ocurrió un error desconocido.',
+          title: 'Error al Cargar Solicitudes',
+          description: error.message || 'Ocurrió un error al cargar las solicitudes de registro.',
           variant: 'destructive',
         });
       } finally {
@@ -156,43 +191,34 @@ const AdminDashboard = () => {
 
     if (isAdmin) {
       fetchSolicitudes();
-    } else {
-      // If not admin (or not yet determined), ensure loading stops and data is clear
-      setSolicitudes([]);
-      setLoadingSolicitudes(false);
     }
   }, [isAdmin, toast]);
 
   useEffect(() => {
     const fetchInfoRequests = async () => {
-      if (!isAdmin) return; 
+      if (!isAdmin) {
+        console.log('Not admin, skipping fetchInfoRequests');
+        return;
+      } 
       setLoadingInfoRequests(true);
       try {
+        console.log('Fetching info requests for admin...');
         
         const { data, error } = await supabase
           .from('infoactivo')
-          .select(`
-            id,
-            created_at,
-            mensaje,
-            activo_id,
-            user_id,
-            estado,
-            activos:activo_id ( id, category, subcategory1, subcategory2, city, country ),
-            profiles:user_id ( user_id )
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) {
-           throw error;
-         }
+          console.error('Error fetching infoactivo:', error);
+          throw error;
+        }
          
-         
-         console.log('Raw data from infoactivo fetch:', data); 
+        console.log('Raw data from infoactivo fetch:', data); 
+        console.log('Number of info requests found:', data?.length || 0);
 
-         
-         setInfoRequests(data || []); 
- 
+        setInfoRequests(data || []); 
+
        } catch (error: any) {
         
         console.error('Error fetching info requests:', error);
@@ -236,11 +262,19 @@ const AdminDashboard = () => {
       setLoadingAssets(true);
       try {
         const { data, error } = await supabase
-          .from('activos')
+          .from('assets')
           .select('*');
 
         if (error) throw error;
-        setAssets(data || []);
+        
+        // Asegurar valores por defecto para evitar errores de formato
+        const assetsWithDefaults = (data || []).map(asset => ({
+          ...asset,
+          priceAmount: asset.priceAmount || 0,
+          priceCurrency: asset.priceCurrency || 'EUR'
+        }));
+        
+        setAssets(assetsWithDefaults);
       } catch (error: any) {
         console.error('Error fetching assets:', error);
         toast({
@@ -670,7 +704,7 @@ const AdminDashboard = () => {
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <CardTitle>Gestión de Solicitudes de Registro</CardTitle>
-                        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+                        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto justify-start sm:justify-end">
                           {(['pending', 'approved', 'denied', 'all'] as const).map((filter) => (
                             <Button
                               key={filter}
@@ -697,9 +731,9 @@ const AdminDashboard = () => {
                         (() => {
                         const filteredSolicitudes = solicitudes.filter(s => {
                           if (registroFilter === 'all') return true;
-                          if (registroFilter === 'pending') return s.estado === null;
-                          if (registroFilter === 'approved') return s.estado === true;
-                          if (registroFilter === 'denied') return s.estado === false;
+                          if (registroFilter === 'pending') return s.estado === 0;
+                          if (registroFilter === 'approved') return s.estado === 1;
+                          if (registroFilter === 'denied') return s.estado === 2;
                           return true;
                         });
 
@@ -731,11 +765,11 @@ const AdminDashboard = () => {
                                       <TableCell>{mapRolLegible(solicitud.su_rol)}</TableCell>
                                       <TableCell>
                                         <StatusBadge 
-                                          status={solicitud.estado === null ? 'pending' : solicitud.estado === true ? 'approved' : 'rejected'} 
+                                          status={solicitud.estado === 0 ? 'pending' : solicitud.estado === 1 ? 'approved' : 'rejected'} 
                                         />
                                       </TableCell>
                                       <TableCell className="text-left">
-                                        {solicitud.estado === null && ( // Only show actions for pending
+                                        {solicitud.estado === 0 && ( // Only show actions for pending
                                           <div className="flex gap-2">
                                             <Button
                                               aria-label={isOpen ? 'Cancelar aprobación' : 'Aprobar solicitud'}
@@ -753,12 +787,12 @@ const AdminDashboard = () => {
                                             </Button>
                                           </div>
                                         )}
-                                        {solicitud.estado === true && <span className="text-green-600">Aprobada</span>}
-                                        {solicitud.estado === false && <span className="text-red-600">Denegada</span>}
+                                        {solicitud.estado === 1 && <span className="text-green-600">Aprobada</span>}
+                                        {solicitud.estado === 2 && <span className="text-red-600">Denegada</span>}
                                       </TableCell>
                                     </TableRow>
                                   );
-                                  if (isOpen && solicitud.estado === null) { // Only show details for pending and open
+                                  if (isOpen && solicitud.estado === 0) { // Only show details for pending and open
                                     rows.push(
                                       <TableRow key={`${solicitud.id}-details`} className="bg-gray-50">
                                         <TableCell colSpan={5} className="p-4"> {/* Adjusted colSpan */}
@@ -803,7 +837,7 @@ const AdminDashboard = () => {
                                       <CardTitle className="text-base">{solicitud.nombre_completo}</CardTitle>
                                       <p className="text-xs text-gray-500">{solicitud.correo_electronico}</p>
                                     </div>
-                                    <StatusBadge status={solicitud.estado === null ? 'pending' : solicitud.estado === true ? 'approved' : 'rejected'} />
+                                    <StatusBadge status={solicitud.estado === 0 ? 'pending' : solicitud.estado === 1 ? 'approved' : 'rejected'} />
                                   </div>
                                 </CardHeader>
                                 <CardContent className="flex-grow space-y-2">
@@ -812,7 +846,7 @@ const AdminDashboard = () => {
                                   {solicitud.numero_telefono && <p className="text-sm"><strong>Teléfono:</strong> {solicitud.numero_telefono}</p>}
                                   {solicitud.mensaje && <p className="text-sm truncate" title={solicitud.mensaje}><strong>Mensaje:</strong> {solicitud.mensaje}</p>}
                                 </CardContent>
-                                {solicitud.estado === null && ( // Only show actions for pending
+                                {solicitud.estado === 0 && ( // Only show actions for pending
                                   <CardFooter className="flex gap-2 justify-end pt-4">
                                     <Button
                                       aria-label={openRequests[solicitud.id] ? 'Cancelar aprobación' : 'Aprobar solicitud'}
@@ -830,7 +864,7 @@ const AdminDashboard = () => {
                                     </Button>
                                   </CardFooter>
                                 )}
-                                {openRequests[solicitud.id] && solicitud.estado === null && ( // Only show details for pending and open
+                                {openRequests[solicitud.id] && solicitud.estado === 0 && ( // Only show details for pending and open
                                   <div className="p-4 border-t bg-gray-50">
                                      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
                                         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">

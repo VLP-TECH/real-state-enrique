@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Configuración directa (temporal para solucionar el problema)
+const supabaseUrl = 'https://fljwovuoeasiwzurlgzz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsandvdnVvZWFzaXd6dXJsZ3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NTcwNzYsImV4cCI6MjA3MTUzMzA3Nn0.0gxTvZpOXZH2t6f_wbEZOzRlubx6E5A5ktdphfpmDSY';
+// Debug: verificar que las variables se cargan
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Key:', supabaseKey ? 'Loaded' : 'Missing');
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 

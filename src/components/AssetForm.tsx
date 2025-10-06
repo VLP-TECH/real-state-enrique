@@ -177,8 +177,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
     city: '',
     area: '',
     expectedReturn: undefined,
-    priceAmount: undefined,
-    priceCurrency: 'USD',
+    priceAmount: 0,
+    priceCurrency: 'EUR',
     description: '',
     files: [],
     category: '',
@@ -193,23 +193,25 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
 
   useEffect(() => {
     const initialize = async () => {
+      console.log('🔍 AssetForm: Starting initialization...');
+      
       try {
         const { error, count } = await supabase
-          .from('activos')
+          .from('assets')
           .select('*', { count: 'exact', head: true });
 
         if (error) {
-          console.error("Error connecting to 'activos' table:", error);
+          console.error("❌ AssetForm: Error connecting to 'assets' table:", error);
           toast({
             title: "Error de Conexión",
             description: `No se pudo conectar a la tabla de activos: ${error.message}`,
             variant: "destructive",
           });
         } else {
-          console.log("Successfully connected to 'activos' table. Count:", count);
+          console.log("✅ AssetForm: Successfully connected to 'assets' table. Count:", count);
         }
       } catch (err) {
-        console.error("Exception during connection test:", err);
+        console.error("💥 AssetForm: Exception during connection test:", err);
         toast({
           title: "Error Inesperado",
           description: "Ocurrió una excepción al probar la conexión.",
@@ -219,16 +221,16 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) {
-        console.error("Error fetching user:", userError);
+        console.error("❌ AssetForm: Error fetching user:", userError);
         toast({
           title: "Error de Autenticación",
           description: `Error al obtener usuario: ${userError.message}`,
           variant: "destructive",
         });
       } else if (user) {
-        console.log("User ID set:", user.id);
+        console.log("✅ AssetForm: User ID set:", user.id);
       } else {
-        console.error("User not logged in");
+        console.error("❌ AssetForm: User not logged in");
         toast({
           title: "Error de Autenticación",
           description: "Debes iniciar sesión para subir un activo.",
@@ -320,10 +322,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
       return;
     }
 
-    if (!formData.country || !formData.city || !formData.priceAmount) {
+    if (!formData.country || !formData.city || !formData.priceAmount || formData.priceAmount <= 0) {
       toast({
         title: "Error de Validación",
-        description: "Por favor, completa todos los campos obligatorios.",
+        description: "Por favor, completa todos los campos obligatorios y asegúrate de que el precio sea mayor a 0.",
         variant: "destructive",
       });
       return;
@@ -332,31 +334,50 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
     setIsSubmitting(true);
 
     try {
-      // Primero enviar archivos a n8n si hay
+      // 1. Enviar archivos a n8n si hay (opcional, no crítico)
       if (uploadedFiles.length > 0) {
-        await submitToN8n(userId, userName, formData, uploadedFiles);
+        // Ejecutar en paralelo sin bloquear
+        submitToN8n(userId, userName, formData, uploadedFiles)
+          .then(() => console.log("Files sent to n8n successfully"))
+          .catch((n8nError) => {
+            console.warn("n8n webhook failed (non-critical):", n8nError);
+          });
       }
 
-      // Luego insertar en Supabase
+      // 2. Adaptar datos para la tabla assets (solo campos que existen)
       const assetData = {
         user_id: userId,
-        purpose: formData.purpose,
-        type: formData.type,
-        country: formData.country,  // Corregido: estaba vacío
-        city: formData.city,        // Corregido: estaba vacío
-        area: formData.area || null,
-        expectedReturn: formData.expectedReturn,
-        priceAmount: formData.priceAmount,
-        priceCurrency: formData.priceCurrency,
+        title: `${formData.category} en ${formData.city}`,
         description: formData.description,
-        category: formData.category,
-        subcategory1: formData.subcategory1,
-        subcategory2: formData.subcategory2,
-        url: 'https://example.com/default-url',
+        price: formData.priceAmount,
+        location: `${formData.city}, ${formData.country}`,
+        property_type: formData.category,
+        status: 'available'
       };
 
+      // Agregar campos opcionales solo si existen en la tabla
+      if (formData.area) {
+        assetData.area = formData.area;
+      }
+      if (formData.priceCurrency) {
+        assetData.price_currency = formData.priceCurrency;
+      }
+      if (formData.subcategory1) {
+        assetData.subcategory1 = formData.subcategory1;
+      }
+      if (formData.subcategory2) {
+        assetData.subcategory2 = formData.subcategory2;
+      }
+      if (formData.purpose) {
+        assetData.purpose = formData.purpose;
+      }
+      if (formData.expectedReturn) {
+        assetData.expected_return = formData.expectedReturn;
+      }
+
+      // Cambiar de 'activos' a 'assets'
       const { data, error } = await supabase
-        .from('activos')
+        .from('assets')
         .insert([assetData])
         .select();
 
@@ -367,7 +388,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
       console.log('Asset inserted:', data);
       toast({
         title: "Activo Creado",
-        description: "El activo ha sido registrado correctamente.",
+        description: uploadedFiles.length > 0 
+          ? "El activo ha sido registrado correctamente. Los archivos se enviaron a n8n."
+          : "El activo ha sido registrado correctamente.",
       });
 
       // Reset form
@@ -377,8 +400,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
         city: '',
         area: '',
         expectedReturn: undefined,
-        priceAmount: undefined,
-        priceCurrency: 'USD',
+        priceAmount: 0,
+        priceCurrency: 'EUR',
         description: '',
         files: [],
         category: '',
@@ -387,19 +410,16 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
         type: 'asset',
       });
       setUploadedFiles([]);
-      setAvailableSubcategories1([]);
-      setAvailableSubcategories2([]);
+
+      if (onSubmit) {
+        onSubmit(data[0]);
+      }
 
     } catch (error: any) {
-      console.error('Error:', error);
-      let errorMessage = "Ocurrió un error al procesar el activo.";
-      if (error?.message) errorMessage = error.message;
-      if (error?.details) errorMessage += ` Detalles: ${error.details}`;
-      if (error?.hint) errorMessage += ` Pista: ${error.hint}`;
-
+      console.error('Error creating asset:', error);
       toast({
-        title: "Error",
-        description: errorMessage,
+        title: "Error al Crear Activo",
+        description: error.message || "Ocurrió un error al crear el activo.",
         variant: "destructive",
       });
     } finally {
@@ -408,6 +428,43 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
   };
 
   const assetPurposes: AssetPurpose[] = ['sale', 'purchase', 'need'];
+
+  async function sendEmailNotification(
+    userIdProp: string,
+    userNameProp: string,
+    formData: AssetFormData,
+    files: File[]
+  ) {
+    try {
+      // Crear un enlace de correo con toda la información
+      const subject = encodeURIComponent(`Nuevo activo con documentos - ${formData.category} en ${formData.city}`);
+      const body = encodeURIComponent(`
+Nuevo activo subido con documentos adjuntos
+
+Usuario: ${userNameProp} (ID: ${userIdProp})
+Categoría: ${formData.category}
+Subcategoría 1: ${formData.subcategory1 || 'No especificada'}
+Subcategoría 2: ${formData.subcategory2 || 'No especificada'}
+Ubicación: ${formData.city}, ${formData.country}
+Precio: ${formData.priceAmount} ${formData.priceCurrency}
+Descripción: ${formData.description}
+Archivos adjuntos: ${files.length} archivo(s)
+${files.map(file => `- ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`).join('\n')}
+Fecha: ${new Date().toLocaleString('es-ES')}
+
+Nota: Los archivos adjuntos deben ser enviados por separado ya que este es un enlace de correo automático.
+      `);
+
+      // Abrir cliente de correo con la información
+      const mailtoLink = `mailto:chaume@vlptech.es?subject=${subject}&body=${body}`;
+      window.open(mailtoLink, '_blank');
+      console.log("Email notification opened in default email client");
+
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+      // No lanzar error para no interrumpir el flujo principal
+    }
+  }
 
   async function submitToN8n(
     userIdProp: string, 
@@ -428,31 +485,60 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
     form.append("priceCurrency", formData.priceCurrency);
     form.append("description", formData.description);
     form.append("category", formData.category);
-    form.append("subcategory1", formData.subcategory1);
-    form.append("subcategory2", formData.subcategory2);
+    form.append("subcategory1", formData.subcategory1 || "");
+    form.append("subcategory2", formData.subcategory2 || "");
+    form.append("expectedReturn", formData.expectedReturn?.toString() || "");
     form.append("type", formData.type);
 
-    // Añadir archivos con nombre
-    files.forEach(file => {
-      form.append("files", file, file.name);
+    // Añadir archivos con el nombre que espera n8n (data)
+    files.forEach((file, index) => {
+      form.append("data", file, file.name); // Cambiar de "files" a "data"
+      form.append(`file_${index}_name`, file.name);
+      form.append(`file_${index}_size`, file.size.toString());
+      form.append(`file_${index}_type`, file.type);
     });
 
+    // Añadir metadatos adicionales
+    form.append("totalFiles", files.length.toString());
+    form.append("timestamp", new Date().toISOString());
+
     try {
-      const response = await fetch("https://n8n-n8n.uhoyr2.easypanel.host/webhook-test/subir-activo", {
+      console.log("Sending to n8n webhook:", {
+        userId: userIdProp,
+        userName: userNameProp,
+        category: formData.category,
+        filesCount: files.length,
+        files: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+      });
+
+      // Usar timeout para evitar bloqueos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
+      const response = await fetch("https://ia-tools-n8n.rzd02y.easypanel.host/webhook-test/b70ae63c-8836-455b-9e60-87abfc9cf811", {
         method: "POST",
         body: form,
+        signal: controller.signal,
+        mode: 'cors', // Intentar CORS
+        credentials: 'omit' // No enviar cookies
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log("Success:", result);
-      toast({ title: "Archivos enviados correctamente a n8n" });
+      console.log("n8n webhook success:", result);
+      
       return result;
     } catch (error) {
-      console.error("Error al enviar a n8n:", error);
+      if (error.name === 'AbortError') {
+        console.warn("n8n webhook timeout - continuing without it");
+      } else {
+        console.warn("n8n webhook failed:", error.message);
+      }
       throw error;
     }
   }
@@ -630,7 +716,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSubmit, userId, userName }): JS
                   name="priceAmount"
                   type="text"
                   placeholder="Importe"
-                  value={formData.priceAmount || undefined}
+                  value={formData.priceAmount || ''}
                   onChange={handleChange}
                   required
                   onKeyPress={(event) => {

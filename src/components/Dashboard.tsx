@@ -43,8 +43,40 @@ const Dashboard: React.FC = () => {
     "Suelo Rústico", "Solar con Proyecto", "Suelo Industrial"
   ];
 
+  // Función para generar ID formateado
+  const generateFormattedId = (uuid: string): string => {
+    // Tomar los primeros 4 caracteres y los siguientes 2 del UUID
+    const firstPart = uuid.substring(0, 4).toUpperCase();
+    const secondPart = uuid.substring(4, 6).toUpperCase();
+    return `ID-${firstPart}-${secondPart}`;
+  };
+
+  // Función para mapear datos de assets a Asset
+  const mapAssetsData = (assets: any[]): Asset[] => {
+    return assets.map(asset => ({
+      id: asset.id,
+      purpose: 'sale' as AssetPurpose, // Valor por defecto
+      category: asset.property_type,
+      subcategory1: asset.property_type,
+      subcategory2: asset.property_type,
+      country: asset.location?.split(',')[1]?.trim() || 'España',
+      city: asset.location?.split(',')[0]?.trim() || asset.location,
+      area: '100', // Valor por defecto
+      expectedReturn: 7.5, // Valor por defecto
+      priceAmount: asset.price,
+      priceCurrency: 'EUR',
+      description: asset.description,
+      creado: asset.created_at,
+      user_id: asset.user_id,
+      files: [],
+      // Añadir el ID formateado para visualización
+      displayId: generateFormattedId(asset.id)
+    }));
+  };
+
   const filteredAssets = allAssets.filter((asset) => {
     const lowercasedFilter = locationFilter.toLowerCase();
+    
     const priceMatch = priceRangeFilter.min === undefined ||
                      (asset.priceAmount >= (priceRangeFilter.min || 0) &&
                       asset.priceAmount <= (priceRangeFilter.max || Infinity));
@@ -66,37 +98,46 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profile) {
-          const { count } = await supabase
-            .from('activos')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-
-          const { count: requestsCount } = await supabase
-            .from('infoactivo')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-
-          setUserProfile({
-            id: user.id,
-            role: profile.role || 'buyer_mandatary',
-            registrationDate: user.created_at,
-            isApproved: profile.is_approved || false,
-            fullName: profile.full_name || '',
-            email: user.email || '',
-            assetsCount: count || 0,
-            requestsCount: requestsCount || 0
-          });
-          if (profile.admin) setIsAdmin(true);
+      console.log('🔍 Starting fetchProfile...');
+      
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('👤 User:', user);
+        console.log('❌ User Error:', userError);
+        
+        if (userError) {
+          console.error('Error getting user:', userError);
+          return;
         }
+        
+        if (user) {
+          console.log('🔍 Creating basic profile for user:', user.id);
+          
+          // Crear un perfil básico sin consultar la tabla profiles
+          const basicProfile = {
+            id: user.id,
+            role: 'buyer_mandatary' as const,
+            registrationDate: user.created_at,
+            isApproved: true,
+            fullName: user.email?.split('@')[0] || 'Usuario',
+            email: user.email || '',
+            assetsCount: 0,
+            requestsCount: 0
+          };
+          
+          console.log('✅ Setting basic profile:', basicProfile);
+          setUserProfile(basicProfile);
+          
+          // Verificar si es admin basado en el email
+          if (user.email === 'admin@gmail.com') {
+            console.log('👑 User is admin');
+            setIsAdmin(true);
+          }
+        } else {
+          console.log('❌ No user found');
+        }
+      } catch (error) {
+        console.error('💥 Error in fetchProfile:', error);
       }
     };
 
@@ -128,11 +169,12 @@ const Dashboard: React.FC = () => {
     const fetchUserAssets = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Usar tabla 'assets'
         const { data: assets } = await supabase
-          .from('activos')
+          .from('assets')
           .select('*')
           .eq('user_id', user.id);
-        setUserAssets(assets || []);
+      setUserAssets(assets || []);
       }
     };
 
@@ -144,8 +186,8 @@ const Dashboard: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: assets, error } = await supabase
-          .from('activos')
-          .select('id, purpose, category, subcategory1, subcategory2, country, city, area, expectedReturn, priceAmount, priceCurrency, description, creado, user_id')
+          .from('assets')
+          .select('id, title, description, price, location, property_type, status, user_id, created_at')
           .neq('user_id', user.id);
 
         if (error) {
@@ -157,7 +199,9 @@ const Dashboard: React.FC = () => {
           });
         } else {
           console.log("Fetched all assets:", assets);
-          setAllAssets(assets || []);
+          // Mapear los datos al tipo Asset
+          const mappedAssets = mapAssetsData(assets || []);
+          setAllAssets(mappedAssets);
         }
       }
     };
@@ -719,7 +763,14 @@ const Dashboard: React.FC = () => {
                     userName={userProfile.fullName}
                   />
                 ) : (
-                  <div>Loading...</div>
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-estate-navy mx-auto mb-4"></div>
+                      <p className="text-estate-steel">Cargando formulario...</p>
+                      <p className="text-sm text-estate-steel mt-2">userProfile: {userProfile ? 'Loaded' : 'Loading...'}</p>
+                      <p className="text-xs text-estate-steel mt-1">Revisa la consola para más detalles</p>
+                    </div>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>

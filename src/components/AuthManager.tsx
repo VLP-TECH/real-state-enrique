@@ -21,19 +21,9 @@ const AuthManager = () => {
       const currentPath = location.pathname;
 
       if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('admin')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          navigate('/dashboard');
-          return;
-        }
-
-        const isAdmin = profile?.admin === true;
+        // Simplificar: determinar si es admin basado en el email
+        const isAdmin = user.email === 'admin@gmail.com';
+        
         let expectedPath = '/';
         let description = 'Debes iniciar sesión para acceder a esta página.';
 
@@ -41,12 +31,10 @@ const AuthManager = () => {
           if (isAdmin && currentPath === '/dashboard') {
             expectedPath = '/dashboard/admin';
             description = 'Acceso no autorizado. Redirigiendo...';
-            // Removed toast notification
             navigate(expectedPath, { replace: true });
           } else if (!isAdmin && currentPath !== '/dashboard') {
             expectedPath = '/dashboard';
-             description = 'Acceso no autorizado. Redirigiendo...';
-            // Removed toast notification
+            description = 'Acceso no autorizado. Redirigiendo...';
             navigate(expectedPath, { replace: true });
           }
         }
@@ -85,43 +73,44 @@ const AuthManager = () => {
     });
 
     setIsAuthenticated(true);
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('admin')
-      .eq('user_id', data.user.id)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      navigate('/dashboard');
-      return;
-    }
-
-    const isAdmin = profile?.admin === true;
+    
+    // Simplificar: determinar si es admin basado en el email
+    const isAdmin = data.user?.email === 'admin@gmail.com';
     navigate(isAdmin ? '/dashboard/admin' : '/dashboard');
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: 'Sesión Cerrada',
-      description: 'Has cerrado sesión correctamente.',
-    });
-    setIsAuthenticated(false);
-    navigate('/');
-  };
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user !== null;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        toast({
+          title: 'Error al cerrar sesión',
+          description: 'Ocurrió un error al cerrar la sesión.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Sesión cerrada',
+          description: 'Has cerrado sesión correctamente.',
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        title: 'Error al cerrar sesión',
+        description: 'Ocurrió un error inesperado al cerrar la sesión.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return {
     isAuthenticated,
     handleLogin,
     handleLogout,
-    checkAuth,
-    authChecked
+    authChecked,
   };
 };
 

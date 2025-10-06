@@ -50,7 +50,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSucce
   }, [open, toast, onClose]);
 
   const handleSubmit = async () => { 
+    console.log('handleSubmit called with userId:', userId, 'asset:', asset?.id);
+    
     if (!asset || !userId) {
+      console.error('Missing required data:', { asset: !!asset, userId: !!userId });
       toast({
         title: "Error",
         description: "Falta información del activo o del usuario. Intenta de nuevo.",
@@ -64,9 +67,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ asset, open, onClose, onSucce
     const requestData = {
       activo_id: asset.id,
       user_id: userId,
+      requester_id: userId, // Agregar requester_id que es requerido
       mensaje: notes || null,
-      estado: 'pending' // Explicitly set status to pending
+      estado: 'pending',
+      status: 'pending' // Agregar status también
     };
+
+    console.log('Sending request data:', requestData);
 
     try {
       const { error } = await supabase
