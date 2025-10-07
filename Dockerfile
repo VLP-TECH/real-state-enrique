@@ -1,6 +1,6 @@
 # Etapa 1: Build con Node
 FROM node:18 AS builder
-WORKDIR /app
+WORKDIR /src
 COPY package*.json ./
 RUN npm install
 COPY . .
