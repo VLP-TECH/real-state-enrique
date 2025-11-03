@@ -4,17 +4,11 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Debug: List contents to see what's being copied
-RUN ls -la
-
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Debug: Verify package.json was copied
-RUN ls -la && cat package.json
-
 # Install dependencies
-RUN npm install
+RUN npm install --production=false
 
 # Copy the rest of the application
 COPY . .

@@ -1,0 +1,34 @@
+# Debug Dockerfile - Simple version
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Show what's in the directory
+RUN echo "=== Contents of /app ===" && ls -la
+
+# Copy everything at once
+COPY . .
+
+# Show what was copied
+RUN echo "=== After COPY ===" && ls -la
+
+# Check if package.json exists
+RUN echo "=== Checking package.json ===" && ls -la package.json && cat package.json
+
+# Install dependencies
+RUN npm install
+
+# Build the application
+RUN npm run build
+
+# Expose port
+EXPOSE 4173
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=4173
+
+# Start the application
+CMD ["npm", "run", "start"]
+
