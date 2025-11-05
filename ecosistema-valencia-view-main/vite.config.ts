@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
     strictPort: false,
     allowedHosts: [
       "web-app-camara-valen.rzd02y.easypanel.host",
+      "web-app-camara-vlc.rzd02y.easypanel.host",
       "localhost",
       "127.0.0.1",
       ".easypanel.host",
