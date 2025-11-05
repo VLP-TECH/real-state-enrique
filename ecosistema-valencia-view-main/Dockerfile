@@ -4,17 +4,14 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Debug: List contents to see what's being copied
-RUN ls -la
-
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Debug: Verify package.json was copied
-RUN ls -la && cat package.json
-
 # Install dependencies
 RUN npm install
+
+# Install serve for static file serving with correct MIME types
+RUN npm install -g serve
 
 # Copy the rest of the application
 COPY . .
@@ -29,5 +26,5 @@ EXPOSE 4173
 ENV NODE_ENV=production
 ENV PORT=4173
 
-# Start the application
-CMD ["npm", "run", "start"]
+# Start the application with serve (better MIME type handling)
+CMD ["serve", "-s", "dist", "-l", "4173", "--cors"]
